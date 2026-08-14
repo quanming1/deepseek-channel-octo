@@ -1,0 +1,46 @@
+# deepseek-channel-octo configuration template (C3)
+#
+# Usage:
+#   1. Copy this file to `octo.config.yaml`:
+#        cp octo.config.example.yaml octo.config.yaml
+#   2. Fill in your Octo bot credentials (see README "Quick start").
+#   3. Start the daemon:
+#        npx dsh-octo-bot octo run
+#
+# Notes:
+#   - `octo.config.yaml` is git-ignored (it contains bot tokens) — never commit it.
+#   - Path can be overridden with the OCTO_CONFIG environment variable.
+#   - If no config file exists, legacy env vars are used as fallback:
+#     OCTO_API_URL / OCTO_BOT_TOKEN / OCTO_BOT_UID.
+
+# Octo server REST API base URL (required).
+# E.g. https://im.deepminer.com.cn/api
+apiUrl: https://your-octo-server.example/api
+
+# Optional: WuKongIM WebSocket URL.
+# Default: server's register response (recommended). Falls back to derivation from apiUrl.
+# wsUrl: wss://your-octo-server.example/ws
+
+# Optional: dsh model name (e.g. deepseek-v4-pro / deepseek-v4-flash).
+# Default: decided by the dsh runtime.
+# model: deepseek-v4-pro
+
+# Bot accounts — add one entry per bot you want to connect (at least one required).
+bots:
+  - # Optional display name (used in logs only).
+    name: my-test-bot
+    # Bot ID from the Octo admin console (required; also the @mention target).
+    botUid: xxxxxxxxxxxxx_bot
+    # Bot token (bf_ prefix; required). Used to register and obtain WS credentials.
+    botToken: bf_your_bot_token_here
+    # Optional account id — prefix of the session key `octo:<accountId>:<chatId>`.
+    # Defaults to botUid. Use a different value per bot if they share groups.
+    # accountId: my-account
+    # Optional group whitelist — only respond to @mentions in these groups.
+    # allowedGroups:
+    #   - 0123456789abcdef0123456789abcdef
+
+  # Add more bots by appending another entry:
+  # - name: another-bot
+  #   botUid: yyyyyyyyyyyyy_bot
+  #   botToken: bf_another_token

@@ -43,11 +43,12 @@ export function buildProgram(): Command {
     .command('octo')
     .description('Octo 通道 daemon')
     .command('run')
-    .description('启动 Octo 桥接 daemon（环境变量 OCTO_API_URL/OCTO_BOT_TOKEN/OCTO_BOT_UID）')
+    .description('启动 Octo 桥接 daemon（octo.config.yaml 优先，缺省回退环境变量）')
     .action(async () => {
       try {
         const { RunOcto } = await import('./bridge/index.js')
-        const config = RunOcto.loadOctoConfig()
+        const { OctoConfig } = await import('./config/index.js')
+        const config = OctoConfig.loadDaemonConfig()
         await RunOcto.runOctoDaemon(config)
       } catch (error) {
         // 与 send 相同的错误分支：已知错误打印后非零退出
