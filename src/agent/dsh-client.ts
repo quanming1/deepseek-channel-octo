@@ -14,9 +14,9 @@ import {
   type DeepSeekHarnessOptions,
   type HarnessNotification,
 } from '@deepseek-ai/dsh-sdk-client'
-import { SDK_PROFILE } from '../config/dsh-compat.js'
-import { dshLaunchSpec } from './sdk-profile.js'
-import { DshError } from './errors.js'
+import { DshCompat } from '../config/dsh-compat.js'
+import { SdkProfile } from './sdk-profile.js'
+import { Errors } from './errors.js'
 
 /** 一次 send 的执行结果 */
 export interface SendResult {
@@ -87,12 +87,12 @@ export async function createHarness(
   model?: string,
 ): Promise<DeepSeekHarness> {
   // Windows 上 dsh 是 .cmd 批处理，需经 cmd.exe /c 包装才能 spawn（dshLaunchSpec 处理）
-  const launch = dshLaunchSpec(dshBin)
+  const launch = SdkProfile.dshLaunchSpec(dshBin)
   const options: DeepSeekHarnessOptions = {
     // 启动 dsh 子进程：--profile 加载 SDK runtime（stdout 是协议帧通道）
     launch: {
       command: launch.command,
-      args: [...launch.args, '--profile', SDK_PROFILE],
+      args: [...launch.args, '--profile', DshCompat.SDK_PROFILE],
       cwd,
     },
     cwd,
@@ -139,11 +139,11 @@ export async function sendPrompt(
 
   // 轮次失败：抛结构化错误让 CLI 以非零退出（防静默失败）
   if (turnError !== null) {
-    throw new DshError(turnError)
+    throw new Errors.DshError(turnError)
   }
   // 无错误但也没有回答：同样是异常
   if (!result.finalResponse) {
-    throw new DshError('dsh 未返回回答（空响应）')
+    throw new Errors.DshError('dsh 未返回回答（空响应）')
   }
 
   return {

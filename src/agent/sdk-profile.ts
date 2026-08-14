@@ -15,23 +15,22 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { SDK_PROFILE, SDK_SERVER_VERSION } from '../config/dsh-compat.js'
-import { DshError } from './errors.js'
-
+import { DshCompat } from '../config/dsh-compat.js'
+import { Errors } from './errors.js'
 /** SDK profile 根目录（$DSH_HOME/profiles/<SDK_PROFILE>） */
 export function sdkProfileRoot(env: NodeJS.ProcessEnv = process.env): string {
   const home = env.DSH_HOME ?? join(homedir(), '.dsh')
-  return join(home, 'profiles', SDK_PROFILE)
+  return join(home, 'profiles', DshCompat.SDK_PROFILE)
 }
 
 /** profile 的 package.json：声明 sdk server 依赖 + dsh-base bundle */
 function packageJsonFor(): string {
   return `${JSON.stringify(
     {
-      name: `dsh-profile-${SDK_PROFILE}`,
+      name: `dsh-profile-${DshCompat.SDK_PROFILE}`,
       private: true,
       dependencies: {
-        '@deepseek-ai/dsh-sdk-jsonrpc-server': SDK_SERVER_VERSION,
+        '@deepseek-ai/dsh-sdk-jsonrpc-server': DshCompat.SDK_SERVER_VERSION,
       },
       dsh: {
         profile: {
@@ -106,7 +105,7 @@ export async function ensureSdkProfile(env: NodeJS.ProcessEnv = process.env): Pr
   const result = spawnSync('pnpm', ['install'], { cwd: root, stdio: 'inherit', encoding: 'utf-8' })
   if (result.error || result.status !== 0) {
     const cause = result.error?.message ?? `pnpm 退出码 ${String(result.status)}`
-    throw new DshError(`SDK profile 依赖安装失败（${root}）：${cause}，请检查 pnpm 与网络`)
+    throw new Errors.DshError(`SDK profile 依赖安装失败（${root}）：${cause}，请检查 pnpm 与网络`)
   }
   return root
 }

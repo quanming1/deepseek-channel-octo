@@ -133,3 +133,4 @@
 |---|---|---|
 | 2026-08-14 | 初始定稿 | 用户直接指令启动代码审查优化（「审查冗余代码 死代码 优化代码 && 注释！开始！！」），视同批准 |
 | 2026-08-14 | 验收：AC1 四件套全绿（typecheck/lint/test 15 passed/build 无循环警告）；AC2 grep 无 `SendResult.ok` / `as never` / 直连子模块导入残留；AC3 实机 send 回归正常（中文回答 + 流式 + session）；AC4 新增 isKnownError / pathSeparatorOf / resolveDshBin 回归测试通过 | 全部 FR 落地，验收标准逐条核验通过 |
+| 2026-08-14 | 补全：模块内部跨模块引用改命名空间对象访问——sdk-profile/dsh-client 共 5 处扁平成员导入（`SDK_PROFILE`/`SDK_SERVER_VERSION`/`DshError`/`dshLaunchSpec`）改为 `DshCompat.*`/`Errors.*`/`SdkProfile.*`；import 来源保持源文件（不走目录聚合，避免 index 模块级循环） | Self-Export 一致性补全（评审发现内部引用绕过命名空间，§3.2 要求消费者一律 `ModuleName.Member` 访问）；重核 AC1（四件套全绿、build 无循环警告）、AC2（grep 无扁平成员导入残留）均通过 |
