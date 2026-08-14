@@ -76,6 +76,17 @@ stages:
           - eslint.config.js 规则强化
           - src/ 现有代码按结构化错误等核心规范对齐
         acceptance: "typecheck + lint + test 全绿；AGENTS.md 引用 TS-STYLE-GUIDE 核心规则；现有代码符合结构化错误规范"
+      - id: F2
+        title: Self-Export 命名空间引入
+        status: in_progress
+        prd: docs/prd/PRD-F2-self-export.md
+        prd_status: approved
+        modules:
+          - src/config/dsh-compat.ts、src/agent/*.ts 文件顶部 self-export
+          - src/agent/index.ts + src/config/index.ts 目录聚合
+          - 消费者改命名空间访问（cli.ts / 测试）
+          - AGENTS.md §3.2 Self-Export 规则
+        acceptance: "typecheck + lint + test + build 全绿（无循环警告）；模块均 self-export；消费者命名空间访问；send 回归正常"
 
   # ---- 阶段 C：Octo 通道集成（后续规划，暂不展开 PRD）----
   - id: C
