@@ -18,6 +18,13 @@ zero=0000000000000000000000000000000000000000
 while read local_ref local_oid remote_ref remote_oid; do
   # main 保护：非 main 分支禁止直接 push 到 main；禁止删除 main
   if [ "$remote_ref" = "$protected" ]; then
+    # 首次推送 main（远端为空）：仅当本地 main 分支 HEAD 与推送 oid 一致才放行
+    # （兼容 gh repo create / 仓库初始化的 HEAD -> refs/heads/main refspec）
+    if [ "$remote_oid" = "$zero" ]; then
+      if [ "$(git rev-parse refs/heads/main 2>/dev/null)" = "$local_oid" ]; then
+        continue
+      fi
+    fi
     if [ "$local_ref" != "$protected" ]; then
       echo "[拒绝] Git Flow 保护：禁止直接 push 到 main"
       echo "        main 只接受 release/hotfix 合并后的发布推送（git push origin main）"
