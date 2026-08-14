@@ -1,125 +1,124 @@
-# deepseek-channel-octo Development TODO (TODO.yaml)
+# deepseek-channel-octo 开发任务清单（TODO.yaml）
 
-# Structured task list, organized by roadmap phases. Each step includes:
-#   modules / reference / acceptance criteria / status.
-# Status legend: done completed · in_progress in progress · todo not started
-# PRD-driven: before starting a phase, write its PRD (docs/prd/PRD-<phase>-<name>.md).
-# Consumers: .githooks/check_commit_msg.py validates that feat/fix scopes are real phase ids.
+# 结构化任务清单——按路线图分阶段展开；每步含：涉及模块 / 验收标准 / 状态。
+# 状态图例：done 已完成 · in_progress 进行中 · todo 未开始
+# PRD 驱动：每个阶段开工前先写 PRD（docs/prd/PRD-<阶段>-<名称>.md），流程见 docs/PROCESS.md。
+# 消费方：.githooks/check_commit_msg.py 校验 feat/fix 的 scope 阶段标识真实存在。
 
 meta:
   status_legend:
-    done: Completed
-    in_progress: In progress
-    todo: Not started
+    done: 已完成
+    in_progress: 进行中
+    todo: 未开始
 
 stages:
-  # ---- Phase A: Foundation ----
+  # ---- 阶段 A：地基 ----
   - id: A
-    name: Foundation
+    name: 地基
     steps:
       - id: A1
-        title: Project skeleton + CLI + config system
+        title: 项目骨架 + CLI + 配置系统
         status: in_progress
         prd: docs/prd/PRD-A1-project-skeleton.md
-        prd_status: draft
+        prd_status: 草稿
         modules:
-          - package.json (ESM, TypeScript, node >= 22.19)
-          - bin/dsh-octo-bot.mjs (CLI entry: start / status / restart / stop / doctor)
-          - src/config/ (env, app-paths, dsh-compat single source of truth)
-        acceptance: "typecheck + lint + vitest pass; --help lists all commands; config loads from env/file with schema validation"
+          - package.json（ESM、TypeScript、node >= 22.19）
+          - bin/dsh-octo-bot.mjs（CLI 入口：start / status / restart / stop / doctor）
+          - src/config/（env、app-paths、dsh-compat 版本单一事实来源）
+        acceptance: "typecheck + lint + vitest 全过；--help 列出全部子命令；配置从 env/文件加载并经 schema 校验"
       - id: A2
-        title: dsh runtime discovery and profile management
+        title: dsh runtime 发现与 profile 管理
         status: todo
         prd: docs/prd/PRD-A2-dsh-runtime.md
         modules:
-          - src/config/dsh-runtime.ts (dsh bin discovery, DSH_HOME resolution)
-          - src/config/dsh-compat.ts (pinned versions, verifiedAt)
-          - profile scaffold + pnpm install for dsh-sdk-jsonrpc-server
-        acceptance: probes discover dsh CLI; compat matrix matches package.json; profile installs and dumps config
+          - src/config/dsh-runtime.ts（dsh bin 发现、DSH_HOME 解析）
+          - src/config/dsh-compat.ts（锁定版本 + verifiedAt）
+          - profile 脚手架 + pnpm install 安装 dsh-sdk-jsonrpc-server
+        acceptance: "探测能发现 dsh CLI；兼容矩阵与 package.json 一致；profile 安装成功并能 dump-config"
 
-  # ---- Phase B: Bridge core ----
+  # ---- 阶段 B：桥接核心 ----
   - id: B
-    name: Bridge Core
+    name: 桥接核心
     steps:
       - id: B1
-        title: AgentAdapter contract + SDK runtime integration
+        title: AgentAdapter 契约 + SDK runtime 集成
         status: todo
         prd: docs/prd/PRD-B1-agent-adapter.md
         modules:
-          - src/adapters/types.ts (AgentAdapter / AgentRun / AgentEvent)
-          - src/adapters/dsh/sdk-runtime.ts (subprocess launch, one runtime per cwd)
-          - src/adapters/dsh/sdk-adapter.ts (DeepSeekHarness client, session continuation)
-          - src/adapters/dsh/sdk-translate.ts (session.event -> AgentEvent)
-        acceptance: adapter runs a real prompt against a pinned dsh runtime; token-level stream events emitted; session(id) resume works
+          - src/adapters/types.ts（AgentAdapter / AgentRun / AgentEvent）
+          - src/adapters/dsh/sdk-runtime.ts（子进程启动，每 cwd 一个 runtime）
+          - src/adapters/dsh/sdk-adapter.ts（DeepSeekHarness 客户端、会话续跑）
+          - src/adapters/dsh/sdk-translate.ts（session.event -> AgentEvent）
+        acceptance: "adapter 对锁定版 dsh runtime 跑通真实 prompt；token 级流式事件产出；session(id) 续跑生效"
       - id: B2
-        title: ACP approval route (optional)
+        title: ACP 审批路线（可选）
         status: todo
         prd: docs/prd/PRD-B2-acp-approval.md
         modules:
-          - src/adapters/dsh/acp-adapter.ts (permission requests -> ApprovalRequest)
-        acceptance: approval request surfaces via onApprovalRequest; allow/reject options map to outcomes
+          - src/adapters/dsh/acp-adapter.ts（权限请求 -> ApprovalRequest）
+        acceptance: "审批请求经 onApprovalRequest 浮现；allow/reject 选项映射到审批结果"
 
-  # ---- Phase C: Octo channel ----
+  # ---- 阶段 C：Octo 通道 ----
   - id: C
-    name: Octo Channel
+    name: Octo 通道
     steps:
       - id: C1
-        title: Octo server WebSocket client + bot registration
+        title: Octo server WebSocket 客户端 + bot 注册
         status: todo
         prd: docs/prd/PRD-C1-octo-channel.md
         modules:
-          - src/bridge/channel.ts (Octo channel abstraction)
-          - src/bridge/octo-channel.ts (WebSocket connect, message events, bot identity)
-        acceptance: connects to octo-server WS; receives user messages; sends assistant messages; reconnects with backoff
+          - src/bridge/channel.ts（Octo 通道抽象）
+          - src/bridge/octo-channel.ts（WebSocket 连接、消息事件、bot 身份）
+        acceptance: "能连接 octo-server WS；收到用户消息；发送 assistant 消息；断线退避重连"
       - id: C2
-        title: Message model mapping and streaming delivery
+        title: 消息模型映射与流式投递
         status: todo
         prd: docs/prd/PRD-C2-message-mapping.md
         modules:
-          - src/bridge/run-flow.ts (prompt -> run -> stream -> done)
-          - media/attachments handling
-        acceptance: Octo message -> AgentRun prompt; AgentEvent stream -> Octo messages (text/thinking/tool/usage states)
+          - src/bridge/run-flow.ts（prompt -> run -> 流式 -> 完成）
+          - media/attachments 附件处理
+        acceptance: "Octo 消息 -> AgentRun prompt；AgentEvent 流 -> Octo 消息（text/thinking/tool/usage 状态）"
 
-  # ---- Phase D: Sessions & concurrency ----
+  # ---- 阶段 D：会话与并发 ----
   - id: D
-    name: Sessions & Concurrency
+    name: 会话与并发
     steps:
       - id: D1
-        title: Session routing + queue + interruption
+        title: 会话路由 + 排队 + 中断
         status: todo
         prd: docs/prd/PRD-D1-sessions.md
         modules:
-          - src/session/store.ts (chat/topic scope keys -> sessionId)
+          - src/session/store.ts（chat/topic scope key -> sessionId）
           - src/bot/active-runs.ts + pending-queue.ts + run-policy.ts
-        acceptance: two chats run concurrently on separate sessions; /stop interrupts; queued messages merge per policy
+        acceptance: "两个会话并发跑在独立 session 上；/stop 中断；排队消息按策略合并"
       - id: D2
-        title: Access control + approval cards
+        title: 访问控制 + 审批卡片
         status: todo
         prd: docs/prd/PRD-D2-access-approval.md
         modules:
-          - src/config/access-manager.ts (allowlist /invite)
+          - src/config/access-manager.ts（访问白名单 /invite）
           - src/card/approval-card.ts + question-card.ts
-        acceptance: allowlist enforced per chat; approval requests render as interactive cards with options
+        acceptance: "按 chat 强制白名单；审批请求渲染为带选项的交互卡片"
 
-  # ---- Phase E: Hardening ----
+  # ---- 阶段 E：收尾 ----
   - id: E
-    name: Hardening
+    name: 收尾
     steps:
       - id: E1
-        title: Tests, CI, and docs
+        title: 测试、CI 与文档
         status: todo
         prd: docs/prd/PRD-E1-hardening.md
         modules:
-          - vitest unit tests across modules; e2e against local octo-server
-          - .github/workflows/ci.yml (ubuntu + windows + macos matrix, lint/test/typecheck)
-          - upstream radar (check-dsh-upstream) + compat probe (probe-dsh-compat) CI jobs
-          - README complete + docs/COMPATIBILITY.md matrix
-        acceptance: CI green on all platforms; compat probe performs a real SDK handshake; README documents install/quickstart
+          - vitest 单元测试覆盖各模块；对本地 octo-server 的 e2e
+          - .github/workflows/ci.yml（ubuntu + windows + macos 矩阵，lint/test/typecheck）
+          - 上游雷达（check-dsh-upstream）+ 兼容探测（probe-dsh-compat）CI 任务
+          - README 完整化 + docs/COMPATIBILITY.md 兼容矩阵
+        acceptance: "CI 三平台全绿；兼容探测跑通真实 SDK 握手；README 覆盖安装/快速开始"
       - id: E2
-        title: Packaging and release
+        title: 打包与发布
         status: todo
         prd: docs/prd/PRD-E2-release.md
         modules:
-          - npm dual-package publish (deepseek-channel-octo), bin, files whitelist
-          - release:check gate (diff check + typecheck + test + build + upstream consistency)
-        acceptance: "npm pack installs cleanly; dsh-octo-bot start runs as a daemon; release flow produces a tagged version"
+          - npm 发布（deepseek-channel-octo），bin、files 白名单
+          - release:check 门禁（diff 检查 + typecheck + test + build + 上游一致性）
+        acceptance: "npm pack 安装干净；dsh-octo-bot start 以守护方式运行；发布流程产出带 tag 版本"

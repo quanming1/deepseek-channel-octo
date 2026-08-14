@@ -1,83 +1,66 @@
-# Project Management Process (PROCESS.md)
+# 项目推进管理办法（PROCESS.md）
 
-> This file defines the development mechanism: **PRD first, code later**. No phase
-> starts without an approved PRD.
+> 本文件定义项目的开发推进机制：**先 PRD，后开发**。任何阶段没有定稿的 PRD 不开工。
 
-## 1. Core Principles
+## 1. 核心原则
 
-1. **PRD first, code later**: before starting any TODO phase, a corresponding PRD
-   must exist and be finalized (status `approved`).
-2. **One phase, one PRD**: each TODO phase maps to one PRD in `docs/prd/`.
-3. **PRD is a contract**: implementation, tests, and acceptance all follow the PRD;
-   scope is not expanded or shrunk during development without a change record.
+1. **先 PRD，后开发**：每个 TODO 阶段开工前，必须先有对应 PRD 文档并定稿（状态 `approved`）。
+2. **一阶段一 PRD**：每个 TODO 阶段对应一份 PRD 文档，位于 `docs/prd/`。
+3. **PRD 即契约**：实现、测试、验收全部对照 PRD 执行；开发过程中不擅自扩大或缩小范围。
 
-## 2. Six-Step Loop
+## 2. 六步闭环
 
-| Step | Action | Artifact / Status |
+| 步骤 | 动作 | 产物 / 状态 |
 |---|---|---|
-| 1. Kickoff | Pick a phase from `docs/TODO.yaml`, mark it `in_progress`, write the PRD | `docs/prd/PRD-<phase>-<name>.md` (status: draft) |
-| 2. Review | Check requirements and acceptance criteria line by line, finalize | PRD status: `approved` (frozen after finalization; changes need a change record) |
-| 3. Develop | Implement per the PRD; Git Flow: `feature/<phase>-<task>` branch | code + tests; PRD status: in-development |
-| 4. Verify | Execute each acceptance criterion in the PRD (lint / test / build / manual) | all pass → closure; fail → back to develop |
-| 5. Close | **Three-way closure, none optional**: PRD `accepted` + TODO `done` + CHANGELOG appended | push feature branch → GitHub PR into main (no local merge) |
-| 6. Release | release branch + version freeze + regression + tag | `release/<ver>` → main + tag `vX.Y.Z` |
+| 1. 立项 | 从 `docs/TODO.yaml` 选定一个阶段，**TODO 标 `in_progress`**，撰写 PRD | `docs/prd/PRD-<阶段>-<名称>.md`（状态：草稿） |
+| 2. 评审 | 逐条核对需求与验收标准，定稿 | PRD 状态：`approved`（定稿后冻结，变更需走「变更记录」） |
+| 3. 开发 | 按 PRD 需求实现；Git Flow：`feature/<阶段>-<任务>` 分支 | 代码 + 测试；PRD 状态：开发中 |
+| 4. 验证 | 对照 PRD「验收标准」逐条执行（lint / test / build / 手动） | 全部通过 → 进入收尾；失败 → 回开发 |
+| 5. 收尾 | **三联动缺一不可**：PRD 标 `已验收` + TODO 标 `done` + CHANGELOG 追加 `[未发布]` | push feature 分支 → GitHub PR 合入 main（本地不 merge） |
+| 6. 发布 | release 分支 + 版本冻结 + 回归 + tag | `release/<ver>` → main + tag `vX.Y.Z` |
 
-## 3. PRD Document Rules
+## 3. PRD 文档规范
 
-- **Naming**: `PRD-<phase>-<name>.md`, name matching the TODO phase.
-- **Template**: `docs/prd/PRD-TEMPLATE.md` (new phases always copy the template).
-- **Status lifecycle**: `draft → review → approved → in-development → accepted`;
-  no jumps (approved / accepted must record dates).
-- **Change dual-path**:
-  - Within the original PRD scope (same phase/topic, refinement of existing FR/AC)
-    → edit the body + **MUST append a "Change Log" entry (date + change + reason)**
-    + re-verify affected ACs (record the result, e.g. "original ACs unaffected" or
-    "AC3 re-run passed");
-  - Out of scope / new phase / new topic → new PRD (copy template, full loop).
+- **命名**：`PRD-<阶段>-<名称>.md`，名称与 TODO 阶段一致。
+- **模板**：`docs/prd/PRD-TEMPLATE.md`（新阶段一律从模板复制）。
+- **状态生命周期**：`草稿 → 评审 → approved（定稿）→ 开发中 → 已验收`；禁止跳变（approved / 已验收必须留档日期）。
+- **变更双路径**：
+  - 属于原 PRD 范围（同阶段/同主题/对原 FR·AC 的修正细化）→ 修改正文 + **MUST 在末尾追加「变更记录」（日期 + 变更内容 + 理由）** + 重核受影响 AC（结果留痕，如"原 AC 不受影响"或"AC3 已重跑通过"）；
+  - 超出范围 / 新阶段 / 全新主题 → 新开 PRD（复制模板，走完整闭环）。
 
-## 4. Status Linkage
+## 4. 状态联动
 
-| Document | Field | Transition point |
+| 文档 | 字段 | 流转时机 |
 |---|---|---|
-| `docs/TODO.yaml` | `status: in_progress` | kickoff (phase selected) |
-| `docs/TODO.yaml` | `status: done` | closure (acceptance passed) |
-| `docs/prd/PRD-*.md` | meta "Status" | real-time with the six-step loop (MUST flow, no jumps) |
-| `docs/prd/PRD-*.md` "Change Log" | major architecture decisions / requirement changes | at decision time; MUST re-verify affected ACs after change |
-| `CHANGELOG.md` | `[Unreleased]` append | every feature / fix / behavior change completed |
+| `docs/TODO.yaml` | `status: in_progress` | 立项时（选阶段） |
+| `docs/TODO.yaml` | `status: done` | 收尾时（验收通过） |
+| `docs/prd/PRD-*.md` | 元信息「状态」 | 随六步闭环实时更新（MUST 流转，不跳变） |
+| `docs/prd/PRD-*.md` 的「变更记录」 | 重大架构决策 / 需求变更 | 决策发生时；变更后 MUST 重核受影响 AC |
+| `CHANGELOG.md` | `[未发布]` 追加 | 每次功能 / 修复 / 行为变更完成 |
 
-## 5. Acceptance
+## 5. 验收
 
-- Acceptance steps: `<test command>` (automated tests) + `<lint command>` (code
-  standards) + PRD manual acceptance items.
-- Do not mark complete if standards are not met; if repeatedly failing, return to
-  the initial assumptions and re-judge.
+- 验收三步：`<test 命令>`（自动化测试）+ `<lint 命令>`（代码规范）+ PRD 手动验收项。
+- 未达标准不标记完成；反复失败要回到初始假设重新判断。
 
-## 6. Git Flow Integration
+## 6. 与 Git Flow 的配合
 
-- Each PRD maps to one feature branch: `feature/<phase>-<short-name>`.
-- The PRD document itself is committed at kickoff (`prd(A1): add phase A1 PRD`);
-  development starts after the PRD is approved.
-- Phase merge: push feature branch → GitHub PR/MR into main (full-PR flow; local
-  merge forbidden; see AGENTS.md §4).
+- 每份 PRD 对应一个 feature 分支：`feature/<阶段>-<short-name>`。
+- PRD 文档本身在立项阶段提交（`prd(<阶段>): 添加 <阶段> 阶段 PRD`），开发在 PRD 定稿后开始。
+- 阶段合入：push feature 分支 → GitHub PR/MR 合入 main（全 PR 流，禁止本地 merge，遵循 AGENTS.md §4）。
 
-## 7. Reverse-Engineering Existing Projects (no PRD/TODO)
+## 7. 存量项目反推（无 PRD/TODO 时）
 
-When a project is already in development and never had PRD/TODO, reverse-engineer
-before taking over:
+项目已在开发中、从未建立 PRD/TODO 时，先反推再接管：
 
-1. **Map evolution**: `git log --oneline --date=short` (group by feature/version).
-2. **Segment into phases**: cut into N phases by milestone (history = `done`, future = `todo`).
-3. **Fill TODO**: one row per phase (modules + acceptance + status).
-4. **Fill PRDs**: copy the template; derive FR/AC from current code + CHANGELOG +
-   README; status by reality (`accepted` / `approved` with note "reverse-engineered, pending review").
+1. **梳理演进**：`git log --oneline --date=short`（按功能/版本分组）。
+2. **分阶段**：按里程碑切成 N 个阶段（历史功能标 `done`，未来规划标 `todo`）。
+3. **补 TODO**：每个阶段一行（含模块 + 验收标准 + 状态）。
+4. **补 PRD**：从模板复制，FR/AC 从代码现状 + CHANGELOG + README 反推；状态按实际标 `已验收` / `approved`（备注"反推，待复核"）。
 
-Reverse-engineering discipline: analyze before changing; do not break existing
-functionality (lint/test/build stay green after each step); key decisions are
-confirmed with the user first; reverse-engineering is not fabrication (mark
-unverifiable acceptance criteria as "pending review").
+反推纪律：先分析再改；不破坏现有功能（每步后 lint/test/build 保持绿）；关键决策先问再定；反推不是编造（写不出的验收标准标"待复核"）。
 
-## 8. References
+## 8. 完整参考
 
-- Full flowchart (six-step loop + change dual-path + reverse-engineering entry):
-  Rondo Method article §3, §5 — https://quanming1.github.io/minimal-blog/posts/rondo-method/
-- Commit rules: AGENTS.md §4.
+- 完整流程图（六步闭环 + 变更双路径 + 存量反推入口）：Rondo 方法文章 §3 / §5 —— https://quanming1.github.io/minimal-blog/posts/rondo-method/
+- 提交规范：AGENTS.md §4。

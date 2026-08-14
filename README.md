@@ -1,36 +1,33 @@
 # deepseek-channel-octo
 
-Bridge [DeepSeek Harness (dsh)](https://deepseek-harness.github.io/deepseek-harness/reference/)
-agents into [Octo IM](https://github.com/Mininglamp-OSS) — a dsh agent becomes a
-bot/teammate in Octo: message exchange, task execution, streaming cards, approvals.
+把 [DeepSeek Harness (dsh)](https://deepseek-harness.github.io/deepseek-harness/reference/)
+Agent 桥接进 [Octo IM](https://github.com/Mininglamp-OSS)——dsh agent 成为 Octo 中的
+bot/队友：收发消息、执行任务、流式卡片、审批交互。
 
-> **Status**: pre-prototype. Project skeleton and workflow are in place; bridge
-> implementation follows the phase plan in `docs/TODO.yaml`.
+> **状态**：原型前阶段。项目骨架与工作流已就位；桥接实现按 `docs/TODO.yaml` 的阶段计划推进。
 
-## Workflow (Rondo Method)
+## 工作流（Rondo 方法）
 
-This repository runs on a PRD-driven, agent-constrained workflow. Read these before
-touching anything:
+本仓库运行 PRD 驱动、Agent 约束的工作流。动手前先读这些文件：
 
-| File | Purpose |
+| 文件 | 用途 |
 |---|---|
-| `AGENTS.md` | Behavioral contract for all AI agents and humans (MUST read first) |
-| `docs/TODO.yaml` | Structured task list by phase — **the sole execution basis** |
-| `docs/PROCESS.md` | Six-step loop (kickoff → review → develop → verify → close → release) |
-| `docs/prd/PRD-<phase>-*.md` | Phase PRDs — **the sole basis for development** |
-| `.githooks/` | Local enforcement: commit-msg (commit convention) + pre-push (main protection) |
+| `AGENTS.md` | 对所有 AI agent 与人类的行为契约（**必须最先读**） |
+| `docs/TODO.yaml` | 按阶段展开的结构化任务清单——**开发的唯一执行依据** |
+| `docs/PROCESS.md` | 六步闭环推进办法（立项 → 评审 → 开发 → 验证 → 收尾 → 发布） |
+| `docs/prd/PRD-<阶段>-*.md` | 阶段 PRD——**开发的唯一依据** |
+| `.githooks/` | 本地机器强制：commit-msg（提交规范）+ pre-push（main 保护） |
 
-## Enabling Hooks
+## 启用 Hooks
 
 ```bash
 git config core.hooksPath .githooks
 ```
 
-## Branch Model
+## 分支模型
 
-Single-main full-PR flow: feature branches cut from `main`, merged via GitHub PR
-only. See `AGENTS.md` §4.
+单 main 全 PR 流：feature 分支从 `main` 切出，仅经 GitHub PR 合入。见 `AGENTS.md` §4。
 
-## License
+## 许可证
 
-Apache-2.0 (planned; confirmed before contributing to Mininglamp-OSS).
+Apache-2.0（计划中；提交 Mininglamp-OSS 前确认）。

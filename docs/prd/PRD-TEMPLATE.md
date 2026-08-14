@@ -1,86 +1,83 @@
-# PRD-<phase>-<name>
+# PRD-<阶段>-<名称>
 
-> Copy this template to `docs/prd/PRD-<phase>-<name>.md` and fill it in. All content
-> in English.
-> Status lifecycle: draft → review → approved → in-development → accepted
+> 复制本模板到 `docs/prd/PRD-<阶段>-<名称>.md` 使用。所有内容使用中文。
+> 状态生命周期：草稿 → 评审 → approved（定稿）→ 开发中 → 已验收
 
-## Meta
+## 元信息
 
-| Field | Value |
+| 字段 | 值 |
 |---|---|
-| Phase | TODO phase id (e.g. A1) |
-| Name | short description (e.g. CLI + config system) |
-| Status | draft / approved / in-development / accepted |
-| Created | YYYY-MM-DD |
-| Approved | YYYY-MM-DD (fill when approved) |
-| Accepted | YYYY-MM-DD (fill when accepted) |
-| Related | docs/TODO.yaml phase; docs/ROADMAP.md (if any) |
+| 阶段 | 对应 TODO 阶段（如 A1） |
+| 名称 | 简短描述（如 CLI + 配置系统） |
+| 状态 | 草稿 / approved / 开发中 / 已验收 |
+| 创建日期 | YYYY-MM-DD |
+| 定稿日期 | YYYY-MM-DD（approved 时填写） |
+| 验收日期 | YYYY-MM-DD（已验收时填写） |
+| 关联文档 | docs/TODO.yaml 阶段；docs/ROADMAP.md（若有） |
 
-## 1. Background & Goals
+## 1. 背景与目标
 
-- **Background**: why this phase exists (which roadmap step, what problem it solves).
-- **Goal**: the deliverable state after this phase (one sentence).
-- **Non-goals**: explicitly out of scope (prevent scope creep).
+- **背景**：为什么要做这个阶段（对应路线图的哪一步、解决什么问题）。
+- **目标**：本阶段完成后的可交付状态（一句话）。
+- **非目标**：明确不做的事（防止范围蔓延）。
 
-## 2. Requirements Scope
+## 2. 需求范围
 
-### 2.1 Functional Requirements
+### 2.1 功能需求
 
-Each requirement checkable and acceptable:
+每条需求可勾选、可验收：
 
-- [ ] FR1: describe requirement 1 (input / output / behavior)
-- [ ] FR2: describe requirement 2
+- [ ] FR1：描述需求 1（含输入/输出/行为）
+- [ ] FR2：描述需求 2
 
-### 2.2 Non-Functional Requirements
+### 2.2 非功能需求
 
-- Performance: ...
-- Security: ...
-- Compatibility: ...
+- 性能：...
+- 安全：...
+- 兼容性：...
 
-## 3. Technical Design
+## 3. 技术方案
 
-- Module design (directories / files / responsibilities)
-- Key data structures (dataclass / config shape)
-- Dependency choices (must be declared in the manifest)
+- 模块设计（目录 / 文件 / 职责）
+- 关键数据结构（dataclass / 配置结构）
+- 依赖选型（必须已在依赖清单声明）
 
-## 4. Interfaces
+## 4. 接口定义
 
-- CLI command signatures (args / options / output)
-- Config structure (YAML example)
+- CLI 命令签名（参数 / 选项 / 输出）
+- 配置结构（YAML 示例）
 
-## 5. Acceptance Criteria
+## 5. 验收标准
 
-Each executable (command / assertion / checkbox):
+每条可执行（命令 / 断言 / 勾选）：
 
-- [ ] AC1: running `xxx` should produce `yyy`
-- [ ] AC2: `<test command>` all pass
-- [ ] AC3: `<lint command>` no warnings
+- [ ] AC1：执行 `xxx` 应得到 `yyy`
+- [ ] AC2：`<test 命令>` 全部通过
+- [ ] AC3：`<lint 命令>` 无警告
 
-## 6. Test Plan
+## 6. 测试计划
 
-- Unit test coverage points
-- Manual verification steps
+- 单元测试覆盖点
+- 手动验证步骤
 
-## 7. Milestones & Estimates
+## 7. 里程碑与估算
 
-| Subtask | Estimate |
-|---|---|
-| ... | ... |
-
-## 8. Risks & Mitigations
-
-| Risk | Mitigation |
+| 子任务 | 预估 |
 |---|---|
 | ... | ... |
 
-## 9. Change Log
+## 8. 风险与对策
 
-> **This section is the audit trail for requirement changes (mandatory)**: any edit
-> to the FR / AC / technical design MUST append a row here (date + change + reason)
-> and re-verify affected ACs (record the result).
-> Without a change log the PRD silently drifts, code and docs diverge again, and the
-> whole system fails.
+| 风险 | 对策 |
+|---|---|
+| ... | ... |
 
-| Date | Change | Reason |
+## 9. 变更记录
+
+> **本小节是需求变更的审计轨迹（强制）**：任何对正文 FR / AC / 技术方案的修改，
+> MUST 在此追加一行（日期 + 变更内容 + 理由），并重核受影响 AC（结果留痕）。
+> 没有变更记录，PRD 悄悄漂移，代码与文档再次脱节，整套体系失效。
+
+| 日期 | 变更内容 | 理由 |
 |---|---|---|
-| YYYY-MM-DD | Initial draft | — |
+| YYYY-MM-DD | 初始定稿 | — |
