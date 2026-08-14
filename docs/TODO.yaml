@@ -12,113 +12,77 @@ meta:
     todo: 未开始
 
 stages:
-  # ---- 阶段 A：地基 ----
+  # ---- 阶段 A：dsh 接入 MVP ----
   - id: A
-    name: 地基
+    name: dsh 接入 MVP
     steps:
       - id: A1
-        title: 项目骨架 + CLI + 配置系统
+        title: GitHub 开源仓库 + 项目脚手架
         status: in_progress
-        prd: docs/prd/PRD-A1-project-skeleton.md
-        prd_status: 草稿
+        prd: docs/prd/PRD-A1-repo-scaffold.md
+        prd_status: approved
         modules:
-          - package.json（ESM、TypeScript、node >= 22.19）
-          - bin/dsh-octo-bot.mjs（CLI 入口：start / status / restart / stop / doctor）
-          - src/config/（env、app-paths、dsh-compat 版本单一事实来源）
-        acceptance: "typecheck + lint + vitest 全过；--help 列出全部子命令；配置从 env/文件加载并经 schema 校验"
+          - GitHub 公开仓库 deepseek-channel-octo（在用户账号下）
+          - package.json / tsconfig.json / vitest / tsup / ESLint
+          - LICENSE（Apache-2.0）/ README / .gitignore（已有）
+        acceptance: "仓库公开可克隆；pnpm typecheck + lint + test 全绿；LICENSE 与 README 完整"
       - id: A2
-        title: dsh runtime 发现与 profile 管理
+        title: Hello World 插件（在 dsh 上安装运行）
         status: todo
-        prd: docs/prd/PRD-A2-dsh-runtime.md
+        prd: docs/prd/PRD-A2-hello-world.md
+        prd_status: approved
         modules:
-          - src/config/dsh-runtime.ts（dsh bin 发现、DSH_HOME 解析）
-          - src/config/dsh-compat.ts（锁定版本 + verifiedAt）
-          - profile 脚手架 + pnpm install 安装 dsh-sdk-jsonrpc-server
-        acceptance: "探测能发现 dsh CLI；兼容矩阵与 package.json 一致；profile 安装成功并能 dump-config"
+          - src/index.ts（Cordis 插件：name + apply + inject，中文注释）
+          - src/index.test.ts（vitest 单测）
+          - dsh.bundle 声明 + cordis.patch.yml
+        acceptance: "插件在本地 dsh 加载打印 hello；dsh --profile 启动可见插件加载日志；pnpm test 全绿"
 
-  # ---- 阶段 B：桥接核心 ----
+  # ---- 阶段 B：消息收发最简 MVP ----
   - id: B
-    name: 桥接核心
+    name: 消息收发最简 MVP
     steps:
       - id: B1
-        title: AgentAdapter 契约 + SDK runtime 集成
+        title: CLI 向 dsh 发送消息并接收回答
         status: todo
-        prd: docs/prd/PRD-B1-agent-adapter.md
+        prd: docs/prd/PRD-B1-cli-messaging.md
         modules:
-          - src/adapters/types.ts（AgentAdapter / AgentRun / AgentEvent）
-          - src/adapters/dsh/sdk-runtime.ts（子进程启动，每 cwd 一个 runtime）
-          - src/adapters/dsh/sdk-adapter.ts（DeepSeekHarness 客户端、会话续跑）
-          - src/adapters/dsh/sdk-translate.ts（session.event -> AgentEvent）
-        acceptance: "adapter 对锁定版 dsh runtime 跑通真实 prompt；token 级流式事件产出；session(id) 续跑生效"
+          - bin/dsh-octo-bot.mjs（CLI：send 子命令）
+          - src/agent/（官方 @deepseek-ai/dsh-sdk-client 集成，中文注释）
+        acceptance: "CLI 发送 prompt 后返回 dsh 正常回答（含流式输出与退出码）"
       - id: B2
-        title: ACP 审批路线（可选）
+        title: HTTP 接口发送消息并接收回答（可选）
         status: todo
-        prd: docs/prd/PRD-B2-acp-approval.md
+        prd: docs/prd/PRD-B2-http-messaging.md
         modules:
-          - src/adapters/dsh/acp-adapter.ts（权限请求 -> ApprovalRequest）
-        acceptance: "审批请求经 onApprovalRequest 浮现；allow/reject 选项映射到审批结果"
+          - src/http/server.ts（/chat 端点，JSON 请求响应）
+        acceptance: "curl POST /chat 返回 dsh 回答"
 
-  # ---- 阶段 C：Octo 通道 ----
+  # ---- 阶段 C：Octo 通道集成（后续规划，暂不展开 PRD）----
   - id: C
-    name: Octo 通道
+    name: Octo 通道集成
     steps:
       - id: C1
-        title: Octo server WebSocket 客户端 + bot 注册
+        title: AgentAdapter 抽象 + SDK runtime 桥接
         status: todo
-        prd: docs/prd/PRD-C1-octo-channel.md
         modules:
-          - src/bridge/channel.ts（Octo 通道抽象）
-          - src/bridge/octo-channel.ts（WebSocket 连接、消息事件、bot 身份）
-        acceptance: "能连接 octo-server WS；收到用户消息；发送 assistant 消息；断线退避重连"
+          - src/adapters/（AgentAdapter / AgentRun / AgentEvent 契约）
+          - src/adapters/dsh/（sdk-runtime / sdk-adapter / sdk-translate）
+        acceptance: 待立项细化（对齐 docs/dsh-lark-bot-analysis.md）
       - id: C2
-        title: 消息模型映射与流式投递
+        title: Octo WebSocket 通道
         status: todo
-        prd: docs/prd/PRD-C2-message-mapping.md
         modules:
-          - src/bridge/run-flow.ts（prompt -> run -> 流式 -> 完成）
-          - media/attachments 附件处理
-        acceptance: "Octo 消息 -> AgentRun prompt；AgentEvent 流 -> Octo 消息（text/thinking/tool/usage 状态）"
-
-  # ---- 阶段 D：会话与并发 ----
-  - id: D
-    name: 会话与并发
-    steps:
-      - id: D1
-        title: 会话路由 + 排队 + 中断
+          - src/bridge/octo-channel.ts（WS 接入、消息模型、bot 注册）
+        acceptance: 待立项细化
+      - id: C3
+        title: 会话路由与并发
         status: todo
-        prd: docs/prd/PRD-D1-sessions.md
         modules:
-          - src/session/store.ts（chat/topic scope key -> sessionId）
-          - src/bot/active-runs.ts + pending-queue.ts + run-policy.ts
-        acceptance: "两个会话并发跑在独立 session 上；/stop 中断；排队消息按策略合并"
-      - id: D2
-        title: 访问控制 + 审批卡片
+          - src/session/、src/bot/（scope key、排队、中断、审批）
+        acceptance: 待立项细化
+      - id: C4
+        title: 测试 CI 文档与发布
         status: todo
-        prd: docs/prd/PRD-D2-access-approval.md
         modules:
-          - src/config/access-manager.ts（访问白名单 /invite）
-          - src/card/approval-card.ts + question-card.ts
-        acceptance: "按 chat 强制白名单；审批请求渲染为带选项的交互卡片"
-
-  # ---- 阶段 E：收尾 ----
-  - id: E
-    name: 收尾
-    steps:
-      - id: E1
-        title: 测试、CI 与文档
-        status: todo
-        prd: docs/prd/PRD-E1-hardening.md
-        modules:
-          - vitest 单元测试覆盖各模块；对本地 octo-server 的 e2e
-          - .github/workflows/ci.yml（ubuntu + windows + macos 矩阵，lint/test/typecheck）
-          - 上游雷达（check-dsh-upstream）+ 兼容探测（probe-dsh-compat）CI 任务
-          - README 完整化 + docs/COMPATIBILITY.md 兼容矩阵
-        acceptance: "CI 三平台全绿；兼容探测跑通真实 SDK 握手；README 覆盖安装/快速开始"
-      - id: E2
-        title: 打包与发布
-        status: todo
-        prd: docs/prd/PRD-E2-release.md
-        modules:
-          - npm 发布（deepseek-channel-octo），bin、files 白名单
-          - release:check 门禁（diff 检查 + typecheck + test + build + 上游一致性）
-        acceptance: "npm pack 安装干净；dsh-octo-bot start 以守护方式运行；发布流程产出带 tag 版本"
+          - CI 矩阵、兼容探测、npm 发布
+        acceptance: 待立项细化

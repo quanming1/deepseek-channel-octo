@@ -9,7 +9,7 @@
 ## 1. 项目概况
 
 - **deepseek-channel-octo**：把 DeepSeek Harness（dsh）Agent 桥接进 Octo IM——让 dsh agent 能作为 Octo 中的 bot/队友收发消息、执行任务（流式卡片、审批、会话路由）。
-- 当前阶段：A1（项目骨架 + CLI + 配置系统）——详见 `docs/TODO.yaml` 的状态标记
+- 当前阶段：A1（GitHub 开源仓库 + 项目脚手架）——详见 `docs/TODO.yaml` 的状态标记
 - 关键文档：
   - `docs/TODO.yaml` — 结构化 TODO 清单（**开发的唯一执行依据**）
   - `docs/PROCESS.md` — 推进管理办法（六步闭环）
