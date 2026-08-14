@@ -67,9 +67,10 @@ stages:
     steps:
       - id: F1
         title: TS-STYLE-GUIDE 规范引入项目
-        status: in_progress
+        status: done
+        date: 2026-08-14
         prd: docs/prd/PRD-F1-ts-style-guide.md
-        prd_status: approved
+        prd_status: 已验收
         modules:
           - AGENTS.md §3 代码风格（命名/函数式/错误处理/导入/注释/反模式）
           - eslint.config.js 规则强化

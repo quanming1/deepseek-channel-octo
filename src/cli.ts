@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { createHarness, sendPrompt } from './agent/dsh-client.js'
 import { ensureSdkProfile, resolveDshBin } from './agent/sdk-profile.js'
 import { VERIFIED_AT } from './config/dsh-compat.js'
+import { CliError, DshError } from './agent/errors.js'
 
 /** 构建 CLI 程序（供 bin 调用与测试复用） */
 export function buildProgram(): Command {
@@ -26,7 +27,22 @@ export function buildProgram(): Command {
     .argument('<prompt>', '要发送给 dsh 的消息内容')
     .option('-m, --model <model>', '模型名（默认由 dsh 决定）')
     .action(async (prompt: string, opts: { model?: string }) => {
-      await runSend(prompt, opts.model)
+      try {
+        await runSend(prompt, opts.model)
+      } catch (error) {
+        // 按结构化错误 tag 分支显示；未知错误冒泡为通用失败
+        if (CliError.isInstance(error)) {
+          console.error(`[错误] ${error.message}`)
+          process.exitCode = 1
+          return
+        }
+        if (DshError.isInstance(error)) {
+          console.error(`[错误] ${error.message}`)
+          process.exitCode = 1
+          return
+        }
+        throw error
+      }
     })
 
   return program
@@ -47,40 +63,25 @@ function apiKeyAvailable(): boolean {
   }
 }
 
-/** send 子命令执行体 */
+/** send 子命令执行体：失败时抛结构化错误（CliError / DshError），由 action 统一处理 */
 export async function runSend(prompt: string, model?: string): Promise<number> {
   // 1. 检查环境：dsh 是否可用
   const dshBin = resolveDshBin()
   if (!dshBin) {
-    console.error('[错误] 未找到 dsh CLI。请先安装：npm install -g @deepseek-ai/dsh@0.1.0-rc.6')
-    return 1
+    throw new CliError('未找到 dsh CLI。请先安装：npm install -g @deepseek-ai/dsh@0.1.0-rc.6')
   }
 
   // 2. 检查凭据：环境变量 或 dsh 凭据文件（dsh 的 credentials 服务优先读凭据文件）
   if (!apiKeyAvailable()) {
-    console.error('[错误] 缺少 DeepSeek API key。两种方式任选：')
-    console.error('       ① 环境变量：set DEEPSEEK_API_KEY=sk-xxx')
-    console.error('       ② dsh 凭据文件：写入 ~/.dsh/.credentials.yaml 的 DEEPSEEK_API_KEY')
-    return 1
+    throw new CliError('缺少 DeepSeek API key。两种方式任选：\n       ① 环境变量：set DEEPSEEK_API_KEY=sk-xxx\n       ② dsh 凭据文件：写入 ~/.dsh/.credentials.yaml 的 DEEPSEEK_API_KEY')
   }
 
   // 3. 确保 SDK profile 就绪（首次会自动生成 + pnpm install）
-  try {
-    await ensureSdkProfile()
-  } catch (error) {
-    console.error(`[错误] SDK profile 准备失败：${error instanceof Error ? error.message : String(error)}`)
-    return 1
-  }
+  await ensureSdkProfile()
 
-  // 4. 启动 harness + 握手
+  // 4. 启动 harness + 握手（DshError 由 action 统一处理）
   const cwd = process.cwd()
-  let harness: Awaited<ReturnType<typeof createHarness>> | undefined
-  try {
-    harness = await createHarness(dshBin, cwd, model)
-  } catch (error) {
-    console.error(`[错误] dsh 握手失败：${error instanceof Error ? error.message : String(error)}`)
-    return 1
-  }
+  const harness = await createHarness(dshBin, cwd, model)
 
   // 5. 发送消息，流式输出
   try {
@@ -89,15 +90,8 @@ export async function runSend(prompt: string, model?: string): Promise<number> {
       process.stderr.write(`\u001b[2m${delta}\u001b[0m`)
     })
     process.stdout.write('\n')
-    if (!result.finalResponse && !result.ok) {
-      console.error('[错误] dsh 未返回回答')
-      return 1
-    }
     console.log(`\n[dsh-octo-bot] session=${result.sessionId} 兼容验证日期=${VERIFIED_AT}`)
     return 0
-  } catch (error) {
-    console.error(`\n[错误] 消息发送失败：${error instanceof Error ? error.message : String(error)}`)
-    return 1
   } finally {
     // 6. 关闭 harness（回收子进程）
     await harness.close()

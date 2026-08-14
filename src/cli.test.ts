@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { SDK_CLIENT_VERSION } from './config/dsh-compat.js'
 import { sdkProfileRoot } from './agent/sdk-profile.js'
-import { textDeltaOf, reasoningDeltaOf } from './agent/dsh-client.js'
+import { textDeltaOf, reasoningDeltaOf, turnErrorOf } from './agent/dsh-client.js'
+import { CliError, DshError } from './agent/errors.js'
 
 /**
  * B1 单测：版本一致性、profile 生成、SDK 通知翻译。
@@ -56,5 +57,42 @@ describe('SDK 通知翻译', () => {
   it('非文本事件返回 null', () => {
     const notification = { method: 'session.event', params: { event: { type: 'tool/call', data: {} } } }
     expect(textDeltaOf(notification as never)).toBeNull()
+  })
+
+  it('turn/end 错误提取轮次失败信息', () => {
+    const notification = {
+      method: 'session.event',
+      params: {
+        event: {
+          type: 'turn/end',
+          data: { reason: { kind: 'error', error: { message: 'AUTH: Invalid API key' } } },
+        },
+      },
+    }
+    expect(turnErrorOf(notification as never)).toBe('AUTH: Invalid API key')
+  })
+})
+
+describe('结构化错误（TS-STYLE-GUIDE §8）', () => {
+  it('DshError 带 tag 且 isInstance 收窄', () => {
+    const error = new DshError('dsh 轮次失败')
+    expect(error.tag).toBe('DshError')
+    expect(DshError.isInstance(error)).toBe(true)
+    expect(DshError.isInstance(new Error('普通错误'))).toBe(false)
+  })
+
+  it('CliError 带 tag 且 isInstance 收窄', () => {
+    const error = new CliError('缺少 API key')
+    expect(error.tag).toBe('CliError')
+    expect(CliError.isInstance(error)).toBe(true)
+    expect(CliError.isInstance(new Error('普通错误'))).toBe(false)
+  })
+
+  it('异步失败路径可被 toMatchObject 按 tag 断言', async () => {
+    // 模拟 CLI 失败路径抛结构化错误（与 send 无 key 路径一致）
+    const fail = async () => {
+      throw new CliError('缺少 DeepSeek API key')
+    }
+    await expect(fail()).rejects.toMatchObject({ tag: 'CliError' })
   })
 })

@@ -13,6 +13,7 @@ import { writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { SDK_PROFILE, SDK_SERVER_VERSION } from '../config/dsh-compat.js'
+import { DshError } from './errors.js'
 
 /** SDK profile 根目录（$DSH_HOME/profiles/<SDK_PROFILE>） */
 export function sdkProfileRoot(env: NodeJS.ProcessEnv = process.env): string {
@@ -101,7 +102,7 @@ export async function ensureSdkProfile(env: NodeJS.ProcessEnv = process.env): Pr
   // 安装依赖（pnpm；失败时给出明确错误）
   const result = spawnSync('pnpm', ['install'], { cwd: root, stdio: 'inherit', encoding: 'utf-8' })
   if (result.status !== 0) {
-    throw new Error(`SDK profile 依赖安装失败（${root}），请检查 pnpm 与网络`)
+    throw new DshError(`SDK profile 依赖安装失败（${root}），请检查 pnpm 与网络`)
   }
   return root
 }

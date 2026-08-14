@@ -15,6 +15,9 @@
   `@deepseek-ai/dsh-sdk-client`（JSON-RPC）向本地 dsh 发消息并流式接收回答；
   版本锁定单一事实来源 `dsh-compat.ts`；AC4 实机验证通过（真实中文回答）。
   排障沉淀：settings.yaml 第三方代理 baseURL + credentials 优先文件，见 `docs/PITFALLS.md`。
+- F1（已验收）：TS-STYLE-GUIDE 规范引入——AGENTS.md §3 重写（命名/函数式/结构化错误/
+  导入/注释/反模式清单），eslint 强化（prefer-const / no-else-return / 禁星号导入），
+  现有代码错误处理改为结构化错误（`DshError`/`CliError` + tag + isInstance）。
 - Rondo 方法工作流：`AGENTS.md` 行为契约、`docs/TODO.yaml` 阶段计划（A dsh 接入 MVP /
   B 消息收发 MVP / C Octo 通道）、`docs/PROCESS.md` 六步闭环、`docs/prd/` 阶段 PRD。
 - Git Hooks：`.githooks/commit-msg` + `check_commit_msg.py`（按 TODO 阶段 id 校验提交规范）
