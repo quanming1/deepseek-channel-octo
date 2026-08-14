@@ -7,10 +7,10 @@ import { Command } from 'commander'
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { createHarness, sendPrompt } from './agent/dsh-client.js'
-import { ensureSdkProfile, resolveDshBin } from './agent/sdk-profile.js'
-import { VERIFIED_AT } from './config/dsh-compat.js'
-import { CliError, DshError } from './agent/errors.js'
+import { DshClient } from './agent/dsh-client.js'
+import { SdkProfile } from './agent/sdk-profile.js'
+import { DshCompat } from './config/dsh-compat.js'
+import { Errors } from './agent/errors.js'
 
 /** 构建 CLI 程序（供 bin 调用与测试复用） */
 export function buildProgram(): Command {
@@ -31,12 +31,12 @@ export function buildProgram(): Command {
         await runSend(prompt, opts.model)
       } catch (error) {
         // 按结构化错误 tag 分支显示；未知错误冒泡为通用失败
-        if (CliError.isInstance(error)) {
+        if (Errors.CliError.isInstance(error)) {
           console.error(`[错误] ${error.message}`)
           process.exitCode = 1
           return
         }
-        if (DshError.isInstance(error)) {
+        if (Errors.DshError.isInstance(error)) {
           console.error(`[错误] ${error.message}`)
           process.exitCode = 1
           return
@@ -66,31 +66,31 @@ function apiKeyAvailable(): boolean {
 /** send 子命令执行体：失败时抛结构化错误（CliError / DshError），由 action 统一处理 */
 export async function runSend(prompt: string, model?: string): Promise<number> {
   // 1. 检查环境：dsh 是否可用
-  const dshBin = resolveDshBin()
+  const dshBin = SdkProfile.resolveDshBin()
   if (!dshBin) {
-    throw new CliError('未找到 dsh CLI。请先安装：npm install -g @deepseek-ai/dsh@0.1.0-rc.6')
+    throw new Errors.CliError('未找到 dsh CLI。请先安装：npm install -g @deepseek-ai/dsh@0.1.0-rc.6')
   }
 
   // 2. 检查凭据：环境变量 或 dsh 凭据文件（dsh 的 credentials 服务优先读凭据文件）
   if (!apiKeyAvailable()) {
-    throw new CliError('缺少 DeepSeek API key。两种方式任选：\n       ① 环境变量：set DEEPSEEK_API_KEY=sk-xxx\n       ② dsh 凭据文件：写入 ~/.dsh/.credentials.yaml 的 DEEPSEEK_API_KEY')
+    throw new Errors.CliError('缺少 DeepSeek API key。两种方式任选：\n       ① 环境变量：set DEEPSEEK_API_KEY=sk-xxx\n       ② dsh 凭据文件：写入 ~/.dsh/.credentials.yaml 的 DEEPSEEK_API_KEY')
   }
 
   // 3. 确保 SDK profile 就绪（首次会自动生成 + pnpm install）
-  await ensureSdkProfile()
+  await SdkProfile.ensureSdkProfile()
 
   // 4. 启动 harness + 握手（DshError 由 action 统一处理）
   const cwd = process.cwd()
-  const harness = await createHarness(dshBin, cwd, model)
+  const harness = await DshClient.createHarness(dshBin, cwd, model)
 
   // 5. 发送消息，流式输出
   try {
     // 思考增量以灰色风格输出到 stderr（不污染 stdout 的回答正文）
-    const result = await sendPrompt(harness, prompt, (delta) => {
+    const result = await DshClient.sendPrompt(harness, prompt, (delta) => {
       process.stderr.write(`\u001b[2m${delta}\u001b[0m`)
     })
     process.stdout.write('\n')
-    console.log(`\n[dsh-octo-bot] session=${result.sessionId} 兼容验证日期=${VERIFIED_AT}`)
+    console.log(`\n[dsh-octo-bot] session=${result.sessionId} 兼容验证日期=${DshCompat.VERIFIED_AT}`)
     return 0
   } finally {
     // 6. 关闭 harness（回收子进程）

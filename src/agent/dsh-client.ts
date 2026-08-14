@@ -6,6 +6,9 @@
  * 2. initialize 握手（provider/model/cwd 路由）
  * 3. run 发送 prompt，把 session.event 通知翻译为流式文本输出
  */
+
+// Self-Export 命名空间（TS-STYLE-GUIDE §3）：消费者用 DshClient.xxx 访问
+export * as DshClient from './dsh-client.js'
 import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import type { HarnessNotification } from '@deepseek-ai/dsh-sdk-client'
 import { SDK_PROFILE } from '../config/dsh-compat.js'

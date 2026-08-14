@@ -8,6 +8,9 @@
  * 升级流程：见 docs/PROCESS.md 变更路径——改这里 → 同步 package.json → 全量回归 → 更新 verifiedAt。
  */
 
+// Self-Export 命名空间（TS-STYLE-GUIDE §3）：消费者用 DshCompat.xxx 访问，不必记忆扁平导出名
+export * as DshCompat from './dsh-compat.js'
+
 /** 锁定的 DeepSeek Harness CLI 版本（全局安装 / npx 用） */
 export const DSH_CLI_VERSION = '0.1.0-rc.6'
 

@@ -7,6 +7,9 @@
  *
  * 目录：$DSH_HOME/profiles/<SDK_PROFILE>（DSH_HOME 默认 ~/.dsh，可用环境变量覆盖）
  */
+
+// Self-Export 命名空间（TS-STYLE-GUIDE §3）：消费者用 SdkProfile.xxx 访问
+export * as SdkProfile from './sdk-profile.js'
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
