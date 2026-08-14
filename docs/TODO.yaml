@@ -122,11 +122,16 @@ stages:
           - CLI send --session 选项（透传 sessionId，resume 验收用）
         acceptance: "typecheck + lint + test + build 全绿；adapter/server 双分支单测通过；实机两次独立 CLI 进程同 sessionId 续跑成功（第二次答出第一次教的秘密词）"
       - id: C2
-        title: Octo WebSocket 通道
-        status: todo
+        title: Octo WebSocket 通道（最小 MVP）
+        status: in_progress
+        date: 2026-08-14
+        prd: docs/prd/PRD-C2-octo-channel.md
+        prd_status: approved
         modules:
-          - src/bridge/octo-channel.ts（WS 接入、消息模型、bot 注册）
-        acceptance: 待立项细化
+          - src/bridge/octo/（api 最小集：sendMessage/heartbeat + WS 加密接入/心跳/重连/消息解析）
+          - src/bridge/octo-channel.ts（Octo 事件 → AgentAdapter.run → 文本回复；channel_id→sessionId 映射）
+          - src/bridge/run-octo.ts（daemon 启动：配置/生命周期/优雅退出）+ CLI octo run
+        acceptance: "typecheck + lint + test + build 全绿；单测覆盖 WS 接入/消息解析/会话映射；实机：群里 @bot 发消息 → dsh 回答 → 追问记住上下文（依赖 Octo 测试环境）"
       - id: C3
         title: 会话路由与并发
         status: todo
