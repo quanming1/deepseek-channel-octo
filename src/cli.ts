@@ -24,9 +24,10 @@ export function buildProgram(): Command {
     .description('向 dsh 发送一条消息并流式接收回答')
     .argument('<prompt>', '要发送给 dsh 的消息内容')
     .option('-m, --model <model>', '模型名（默认由 dsh 决定）')
-    .action(async (prompt: string, opts: { model?: string }) => {
+    .option('--session <sessionId>', '续跑指定会话（不传则新建会话）')
+    .action(async (prompt: string, opts: { model?: string; session?: string }) => {
       try {
-        await runSend(prompt, opts.model)
+        await runSend(prompt, opts.model, opts.session)
       } catch (error) {
         // 已知业务错误：打印信息后非零退出；未知错误冒泡为通用失败
         if (Errors.isKnownError(error)) {
@@ -57,7 +58,7 @@ function apiKeyAvailable(): boolean {
 }
 
 /** send 子命令执行体：失败时抛结构化错误（CliError / DshError），由 action 统一处理 */
-export async function runSend(prompt: string, model?: string): Promise<void> {
+export async function runSend(prompt: string, model?: string, sessionId?: string): Promise<void> {
   // 1. 检查环境：dsh 是否可用
   const dshBin = SdkProfile.resolveDshBin()
   if (!dshBin) {
@@ -82,7 +83,7 @@ export async function runSend(prompt: string, model?: string): Promise<void> {
       // 回答正文输出到 stdout；思考增量以灰色风格输出到 stderr（不污染正文）
       onText: (delta) => process.stdout.write(delta),
       onThinking: (delta) => process.stderr.write(`\u001b[2m${delta}\u001b[0m`),
-    })
+    }, sessionId)
     process.stdout.write('\n')
     console.log(`\n[dsh-octo-bot] session=${result.sessionId} 兼容验证日期=${DshCompat.VERIFIED_AT}`)
   } finally {

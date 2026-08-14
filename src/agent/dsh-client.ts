@@ -115,11 +115,14 @@ export async function sendPrompt(
   harness: DeepSeekHarness,
   prompt: string,
   options: SendOptions = {},
+  sessionId?: string,
 ): Promise<SendResult> {
   // 收集轮次错误：dsh 静默失败（如认证失败）必须显式暴露，不能返回空回答假装成功
   let turnError: string | null = null
 
   const result = await harness.run(prompt, {
+    // 传 sessionId = 续跑该会话（新进程下由 server 双分支决定 resume/create）
+    ...(sessionId === undefined ? {} : { sessionId }),
     // 通知观察者：把 token 级增量翻译为回调；捕获轮次错误
     onNotification: (notification) => {
       const text = textDeltaOf(notification)
