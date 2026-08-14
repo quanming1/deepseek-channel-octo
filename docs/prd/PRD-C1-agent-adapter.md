@@ -81,6 +81,45 @@
   - **SessionStore（scope→sessionId 持久化）推迟到 C3**：C1 先保证"同一 sessionId 跨进程可续"
     （FR3/FR4 验收），映射策略与 Octo scope 粒度在 C2/C3 定型。
 
+### 3.1 octo-sdk-server 插件的角色与部署链路（src/adapters/dsh/server/main.ts）
+
+**为什么它是"独立服务"而非"内部模块"**：main.ts 不是被项目主链路 import 调用的普通模块，
+而是**独立打包成 Cordis 插件、部署进 dsh 运行时**的协议服务（与 src/index.ts 插件同类，
+遵循框架约定只导出 name/inject/Config/apply）。
+
+**三层结构**（"创建 session"到底发生在哪一层）：
+
+| 层 | 载体 | 职责 |
+|---|---|---|
+| 插件层 | `octo-sdk-server`（main.ts 的 apply） | dsh 启动时加载；接线：`new ResumeSdkJsonRpcServer(ctx, transport)` + `transport.onRequest` 注册请求入口 |
+| 服务实例层 | `ResumeSdkJsonRpcServer`（apply 内 new 的对象） | 真正干活：`handleRequest` → `prompt` → `getOrCreateSession` → `createSession`（双分支：磁盘存档命中且 cwd 匹配 → `agents.resume`；未命中 → `agents.create`） |
+| 请求层 | SDK client 的 `harness.run({sessionId})` | 只发 JSON-RPC 请求（携带 sessionId），**不直接创建会话**——创建/恢复发生在服务实例层 |
+
+**部署链路**（构建 → 拷贝 → 加载 → 工作）：
+
+```
+① 构建：tsup entry 'octo-sdk-server' → dist/octo-sdk-server.js（@deepseek-ai/* external，运行时由 profile 树提供）
+② 部署：ensureSdkProfile（sdk-profile.ts）将 dist/octo-sdk-server.js 拷贝为
+         ~/.dsh/profiles/octo-sdk/plugins/octo-sdk-server/main.js，并生成
+         package.json（dsh.bundle.patch 声明 + file: 依赖）与 cordis.patch.yml（insert id: octo-sdk-server）
+③ 加载：dsh --profile octo-sdk 启动 → Cordis 加载器按 bundle 规范执行 main.ts 的 apply
+④ 工作：apply 内的 ResumeSdkJsonRpcServer 实例开始服务 SDK client 的 JSON-RPC 请求
+```
+
+**代码引用点全景**：
+
+| 位置 | 类型 | 说明 |
+|---|---|---|
+| `tsup.config.ts` | 构建期 | entry 打包 main.ts → dist/octo-sdk-server.js |
+| `src/adapters/dsh/server/main.test.ts` | 测试期 | import `ResumeSdkJsonRpcServer` 做双分支单测（fake ctx/persistence/transport） |
+| `src/adapters/index.ts` | 聚合 | `export * as DshResumeServer`（预备 C2 消费，当前无使用方） |
+| `src/agent/sdk-profile.ts` | 部署期 | 拷贝 bundle + profile 依赖/补丁声明 |
+| CLI 主链路（cli.ts/dsh-client.ts） | — | **不直接 import**——经 JSON-RPC 协议与它通信 |
+
+**为什么这样设计**：协议面（initialize/session/prompt/shutdown + 4 类通知）与官方
+dsh-sdk-jsonrpc-server 完全兼容，因此 SDK client 零改动；仅服务端内部把"永远 create"
+替换为"有存档先 resume"——这正是跨进程会话恢复的落点（AC3 实测证据）。
+
 ## 4. 接口定义
 
 - CLI：`dsh-octo-bot send <prompt> [--session <sessionId>] [-m <model>]`。
@@ -135,3 +174,4 @@
 |---|---|---|
 | 2026-08-14 | 初始定稿 | 用户确认推进 C1（「demo 收尾（提交 demo/ + 踩坑记录 && 跟进进 PRD-C1」）；resume 双分支设计源自 demo/demo-resume.mjs 实测验证（场景 A 失败 / 场景 B 成功），踩坑记录见工作区 docs/PITFALLS.md 2.9 |
 | 2026-08-14 | 验收：AC1 四件套全绿（typecheck/lint/test 29 passed/build 无循环）；AC2 单测覆盖双分支（无存档 create/存档 resume/cwd 不匹配报错/缓存复用）与事件翻译与 sessionId 透传；AC3 实机跨进程续跑通过（两次独立 CLI 进程同 session demo-c1，第二次答出「蓝宝石」——自研 server 双分支接管）；AC4 不带 --session 回归 B1 行为（新建 session-xxx） | 全部 FR 落地（契约/Adapter/resume server/profile 挂载/CLI 选项），验收标准逐条核验通过；期间根治 PITFALLS 5.2（Windows spawnSync pnpm ENOENT → cmd.exe /c 包装） |
+| 2026-08-14 | 正文补充 3.1 节「octo-sdk-server 插件的角色与部署链路」：三层结构（插件层/服务实例层/请求层）、部署链路（tsup→dist→profile 拷贝→dsh 加载）、代码引用点全景表、设计理由 | 澄清 main.ts 的定位——它是部署进 dsh 的独立协议服务而非内部模块（用户提问"这段逻辑在哪里使用"暴露文档缺口）；纯说明补充，不影响 FR/AC 结论 |
