@@ -1,11 +1,12 @@
 # deepseek-channel-octo
 
-把 [DeepSeek Harness (dsh)](https://deepseek-harness.github.io/deepseek-harness/reference/)
-Agent 桥接进 [Octo IM](https://github.com/Mininglamp-OSS)——dsh agent 成为 Octo 中的
-bot/队友：收发消息、执行任务、流式卡片、审批交互。
+Bridge [DeepSeek Harness (dsh)](https://deepseek-harness.github.io/deepseek-harness/reference/)
+agents into [Octo IM](https://github.com/Mininglamp-OSS) — a dsh agent becomes an Octo
+bot/teammate: send/receive messages, execute tasks, stream cards, and handle approvals.
 
-> **状态**：原型阶段。Octo WebSocket 通道 MVP 已实机跑通（C2）；bot 配置化与多 bot 支持（C3）。
-> 实现按 `docs/TODO.yaml` 的阶段计划推进。
+> **Status**: prototype. The Octo WebSocket channel MVP is live-verified (C2);
+> config-driven multi-bot support is done (C3). Implementation follows the staged plan
+> in `docs/TODO.yaml`.
 
 ## Quick start
 
@@ -54,38 +55,40 @@ Add the bot to a group and @mention it — the agent replies with the dsh answer
 Each group maps to its own dsh session (`octo:<accountId>:<chatId>`), so the bot
 remembers the conversation per group (restart-safe).
 
-## 工作流（Rondo 方法）
+## Workflow (Rondo method)
 
-本仓库运行 PRD 驱动、Agent 约束的工作流。动手前先读这些文件：
+This repository runs a PRD-driven, agent-constrained workflow. Read these files before
+touching anything:
 
-| 文件 | 用途 |
+| File | Purpose |
 |---|---|
-| `AGENTS.md` | 对所有 AI agent 与人类的行为契约（**必须最先读**） |
-| `docs/TODO.yaml` | 按阶段展开的结构化任务清单——**开发的唯一执行依据** |
-| `docs/PROCESS.md` | 六步闭环推进办法（立项 → 评审 → 开发 → 验证 → 收尾 → 发布） |
-| `docs/prd/PRD-<阶段>-*.md` | 阶段 PRD——**开发的唯一依据** |
-| `.githooks/` | 本地机器强制：commit-msg（提交规范）+ pre-push（main 保护） |
+| `AGENTS.md` | Behavior contract for all AI agents and humans (**read first**) |
+| `docs/TODO.yaml` | Staged, structured task list — **the single source of execution truth** |
+| `docs/PROCESS.md` | How to move a stage forward (six-step closed loop) |
+| `docs/prd/PRD-<stage>-*.md` | Stage PRD — **the single source of truth for development** |
+| `.githooks/` | Local enforcement: commit-msg (commit rules) + pre-push (main protection) |
 
-## 启用 Hooks
+## Enable hooks
 
 ```bash
 git config core.hooksPath .githooks
 ```
 
-## 分支模型
+## Branch model
 
-单 main 全 PR 流：feature 分支从 `main` 切出，仅经 GitHub PR 合入。见 `AGENTS.md` §4。
+Single-main, all-PR flow: feature branches are cut from `main` and merged only via
+GitHub PRs. See `AGENTS.md` §4.
 
-## 开发
+## Development
 
 ```bash
-pnpm install        # 安装依赖（pnpm 11，Node >= 22.19）
-pnpm typecheck      # 类型检查（tsc --noEmit）
+pnpm install        # install deps (pnpm 11, Node >= 22.19)
+pnpm typecheck      # type check (tsc --noEmit)
 pnpm lint           # ESLint
-pnpm test           # vitest 单元测试
-pnpm build          # tsup 构建 -> dist/
+pnpm test           # vitest unit tests
+pnpm build          # tsup build -> dist/
 ```
 
-## 许可证
+## License
 
-Apache-2.0。
+Apache-2.0.
