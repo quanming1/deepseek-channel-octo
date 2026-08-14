@@ -10,6 +10,7 @@ export * as RunOcto from './run-octo.js'
 import { SdkDshAdapter } from '../adapters/dsh/sdk-adapter.js'
 import { SdkProfile } from '../agent/sdk-profile.js'
 import { OctoChannelBridge } from './octo-channel.js'
+import { OctoApi } from './octo/index.js'
 import { Errors } from '../agent/errors.js'
 
 /** daemon 配置（来自环境变量，见 loadOctoConfig） */
@@ -27,11 +28,11 @@ export interface OctoDaemonConfig {
   model?: string
 }
 
-/** 从环境变量加载配置（缺失必填项抛 CliError） */
+/** 从环境变量加载配置（缺失必填项抛 CliError；值统一 trim 防 cmd 尾随空格污染） */
 export function loadOctoConfig(env: NodeJS.ProcessEnv = process.env): OctoDaemonConfig {
-  const apiUrl = env.OCTO_API_URL
-  const botToken = env.OCTO_BOT_TOKEN
-  const botUid = env.OCTO_BOT_UID
+  const apiUrl = env.OCTO_API_URL?.trim()
+  const botToken = env.OCTO_BOT_TOKEN?.trim()
+  const botUid = env.OCTO_BOT_UID?.trim()
   if (!apiUrl || !botToken || !botUid) {
     throw new Errors.CliError(
       '缺少 Octo 配置：请设置环境变量 OCTO_API_URL / OCTO_BOT_TOKEN / OCTO_BOT_UID',
@@ -41,12 +42,12 @@ export function loadOctoConfig(env: NodeJS.ProcessEnv = process.env): OctoDaemon
     apiUrl,
     botToken,
     botUid,
-    accountId: env.OCTO_ACCOUNT_ID ?? botUid,
+    accountId: env.OCTO_ACCOUNT_ID?.trim() || botUid,
     allowedGroups: env.OCTO_ALLOWED_GROUPS
       ? env.OCTO_ALLOWED_GROUPS.split(',').map((s) => s.trim()).filter(Boolean)
       : undefined,
-    wsUrl: env.OCTO_WS_URL ?? deriveWsUrl(apiUrl),
-    model: env.DSH_MODEL,
+    wsUrl: env.OCTO_WS_URL?.trim() || undefined,
+    model: env.DSH_MODEL?.trim() || undefined,
   }
 }
 
@@ -58,6 +59,15 @@ export function deriveWsUrl(apiUrl: string): string {
   return base + '/ws'
 }
 
+/** WS 地址优先级：显式配置（OCTO_WS_URL）> 服务端 register 返回的 ws_url > 由 apiUrl 推导 */
+export function resolveWsUrl(
+  configWsUrl: string | undefined,
+  serverWsUrl: string | undefined,
+  apiUrl: string,
+): string {
+  return configWsUrl ?? serverWsUrl ?? deriveWsUrl(apiUrl)
+}
+
 /** 启动 daemon；resolve 时表示已正常退出（信号触发） */
 export async function runOctoDaemon(config: OctoDaemonConfig): Promise<void> {
   // 1. 环境：dsh 可用 + SDK profile 就绪（复用 C1 资产）
@@ -67,30 +77,43 @@ export async function runOctoDaemon(config: OctoDaemonConfig): Promise<void> {
   }
   await SdkProfile.ensureSdkProfile()
 
-  // 2. 装配 adapter（harness 按 cwd 常驻）
+  // 2. bot 上线：register 换取 WS 认证凭据（bf_ token 不能直接做 WS 握手）
+  const credentials = await OctoApi.registerBot({
+    apiUrl: config.apiUrl,
+    botToken: config.botToken,
+    agentPlatform: 'dsh',
+  })
+  if (config.botUid !== credentials.robot_id) {
+    throw new Errors.CliError(
+      `OCTO_BOT_UID 与注册返回的 robot_id 不一致：${config.botUid} ≠ ${credentials.robot_id}`,
+    )
+  }
+  const wsUrl = resolveWsUrl(config.wsUrl, credentials.ws_url, config.apiUrl)
+
+  // 3. 装配 adapter（harness 按 cwd 常驻；model 缺省由 dsh runtime 决定）
   const launch = SdkProfile.dshLaunchSpec(dshBin)
   const adapter = new SdkDshAdapter({
     launch,
     provider: 'deepseek-official',
-    model: config.model ?? 'deepseek-official',
+    model: config.model,
   })
 
-  // 3. 装配 Octo bridge（WS 接入 + 消息 → agent）
+  // 4. 装配 Octo bridge（WS 接入 + 消息 → agent）
   const bridge = new OctoChannelBridge({
-    accountId: config.accountId ?? config.botUid,
-    botUid: config.botUid,
+    accountId: config.accountId ?? credentials.robot_id,
+    botUid: credentials.robot_id,
     allowedGroups: config.allowedGroups,
     cwd: process.cwd(),
     adapter,
     apiUrl: config.apiUrl,
-    botToken: config.botToken,
-    wsUrl: config.wsUrl ?? deriveWsUrl(config.apiUrl),
+    botToken: credentials.im_token,
+    wsUrl,
   })
 
-  console.log(`[octo] 启动 daemon：api=${config.apiUrl} bot=${config.botUid} ws=${config.wsUrl ?? deriveWsUrl(config.apiUrl)}`)
+  console.log(`[octo] 启动 daemon：api=${config.apiUrl} bot=${credentials.robot_id} ws=${wsUrl}`)
   bridge.start()
 
-  // 4. 常驻：信号触发优雅退出
+  // 5. 常驻：信号触发优雅退出
   await new Promise<void>((resolve) => {
     let stopped = false
     const shutdown = (): void => {

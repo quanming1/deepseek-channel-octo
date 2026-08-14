@@ -133,17 +133,19 @@ export class OctoChannelBridge {
     }
   }
 
-  /** 消费事件流：聚合 text 增量，捕获 error，等 done 结束 */
+  /** 消费事件流：final_text 为权威完整回答（text 增量仅作兜底，避免与 final_text 重复拼接） */
   private async collectRun(events: AsyncIterable<AgentEvent>): Promise<RunOutcome> {
     const textParts: string[] = []
+    let finalText: string | null = null
     let error: string | null = null
     for await (const event of events) {
       switch (event.type) {
         case 'text':
+          // MVP 非流式：增量只作 fallback（final_text 未提供时拼接）
           textParts.push(event.delta)
           break
         case 'final_text':
-          textParts.push(event.content)
+          finalText = event.content
           break
         case 'error':
           error = event.message
@@ -154,7 +156,7 @@ export class OctoChannelBridge {
           break
       }
     }
-    return { text: textParts.join('').trim(), error }
+    return { text: (finalText ?? textParts.join('')).trim(), error }
   }
 }
 

@@ -14,7 +14,6 @@ import {
   type DeepSeekHarnessOptions,
   type HarnessNotification,
 } from '@deepseek-ai/dsh-sdk-client'
-import { DshCompat } from '../config/dsh-compat.js'
 import { SdkProfile } from './sdk-profile.js'
 import { Errors } from './errors.js'
 
@@ -86,15 +85,11 @@ export async function createHarness(
   cwd: string,
   model?: string,
 ): Promise<DeepSeekHarness> {
-  // Windows 上 dsh 是 .cmd 批处理，需经 cmd.exe /c 包装才能 spawn（dshLaunchSpec 处理）
-  const launch = SdkProfile.dshLaunchSpec(dshBin)
+  // Windows 上 dsh 是 .cmd 批处理，需经 cmd.exe /c 包装才能 spawn（dshLaunchSpec 处理）；
+  // --profile 加载 SDK runtime（stdout 是协议帧通道）
+  const launch = SdkProfile.withSdkProfileArgs(SdkProfile.dshLaunchSpec(dshBin))
   const options: DeepSeekHarnessOptions = {
-    // 启动 dsh 子进程：--profile 加载 SDK runtime（stdout 是协议帧通道）
-    launch: {
-      command: launch.command,
-      args: [...launch.args, '--profile', DshCompat.SDK_PROFILE],
-      cwd,
-    },
+    launch: { ...launch, cwd },
     cwd,
     provider: 'deepseek-official',
     ...(model === undefined ? {} : { model }),

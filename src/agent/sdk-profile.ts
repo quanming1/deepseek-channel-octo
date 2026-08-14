@@ -238,3 +238,10 @@ export function dshLaunchSpec(dshBin: string): { command: string; args: string[]
   }
   return { command: dshBin, args: [] }
 }
+
+/** 在 launch 规格上追加 SDK profile 参数（SDK 路线启动 dsh 的必需参数，DshClient/SdkDshAdapter 共用） */
+export function withSdkProfileArgs(
+  launch: { command: string; args: string[] },
+): { command: string; args: string[] } {
+  return { command: launch.command, args: [...launch.args, '--profile', SDK_PROFILE] }
+}

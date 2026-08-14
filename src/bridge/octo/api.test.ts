@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { generateClientMsgNo, sendMessage } from './api.js'
+import { generateClientMsgNo, registerBot, sendMessage } from './api.js'
 
 /** Octo REST 客户端单测（fake fetch） */
 
@@ -44,6 +44,61 @@ describe('sendMessage', () => {
     await expect(
       sendMessage({ apiUrl: 'https://x', botToken: 't', channelId: 'g1', channelType: 2, content: 'hi' }, fetchImpl),
     ).rejects.toThrow('HTTP 500')
+  })
+})
+
+describe('registerBot', () => {
+  it('POST /v1/bot/register + Bearer 认证 + 返回凭据（robot_id/im_token/ws_url）', async () => {
+    const fetchImpl = fakeFetch(async (url, init) => {
+      expect(url).toBe('https://octo.example.com/v1/bot/register')
+      expect((init.headers as Record<string, string>).Authorization).toBe('Bearer bf_token')
+      expect(JSON.parse(String(init.body))).toEqual({ agent_platform: 'dsh', agent_version: '0.1.0' })
+      return new Response(
+        JSON.stringify({
+          robot_id: 'bot-1',
+          name: 'BlueWhale',
+          im_token: 'bf_token',
+          ws_url: 'wss://octo.example.com/ws',
+          api_url: 'https://octo.example.com',
+          owner_uid: 'u1',
+          owner_channel_id: 'u1',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    })
+    const result = await registerBot(
+      { apiUrl: 'https://octo.example.com/', botToken: 'bf_token', agentPlatform: 'dsh', agentVersion: '0.1.0' },
+      fetchImpl,
+    )
+    expect(result.robot_id).toBe('bot-1')
+    expect(result.im_token).toBe('bf_token')
+    expect(result.ws_url).toBe('wss://octo.example.com/ws')
+  })
+
+  it('可选元数据不传时请求体为空对象', async () => {
+    const fetchImpl = fakeFetch(async (_url, init) => {
+      expect(JSON.parse(String(init.body))).toEqual({})
+      return new Response(
+        JSON.stringify({
+          robot_id: 'bot-1',
+          im_token: 't',
+          ws_url: '',
+          api_url: '',
+          owner_uid: '',
+          owner_channel_id: '',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    })
+    const result = await registerBot({ apiUrl: 'https://octo.example.com', botToken: 'bf_token' }, fetchImpl)
+    expect(result.robot_id).toBe('bot-1')
+  })
+
+  it('非 2xx → 抛错含状态码', async () => {
+    const fetchImpl = fakeFetch(async () => new Response('nope', { status: 401 }))
+    await expect(
+      registerBot({ apiUrl: 'https://x', botToken: 'bf_bad' }, fetchImpl),
+    ).rejects.toThrow('HTTP 401')
   })
 })
 

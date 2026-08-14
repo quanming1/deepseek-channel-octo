@@ -42,6 +42,12 @@ describe('sdk-profile 路径与平台', () => {
       rmSync(dir, { recursive: true, force: true })
     }
   })
+
+  it('withSdkProfileArgs 追加 --profile（保留原 command 与已有 args）', () => {
+    const spec = SdkProfile.withSdkProfileArgs({ command: 'cmd.exe', args: ['/c', 'dsh'] })
+    expect(spec.command).toBe('cmd.exe')
+    expect(spec.args).toEqual(['/c', 'dsh', '--profile', 'octo-sdk'])
+  })
 })
 
 describe('SDK 通知翻译', () => {

@@ -30,7 +30,7 @@ import { parseInboundMessage, type InboundMessage } from './messages.js'
 export interface OctoWsOptions {
   /** WuKongIM gateway 地址（ws:// 或 wss://） */
   wsUrl: string
-  /** bot 账号 uid（CONNECT 握手用，也是群里 @bot 的判定依据） */
+  /** bot robot_id（register 返回；WS 握手用，也是群里 @bot 的判定依据） */
   uid: string
   /** bot 认证 token（CONNECT 握手用） */
   token: string
@@ -297,7 +297,8 @@ export class OctoWsClient {
     if (this.serverVersion >= 4) decoder.readInt64BigInt() // nodeId
 
     if (reasonCode !== 1) {
-      // 连接被拒（token 无效等）：不自动重连，交给上层处理
+      // 连接被拒（token 无效/未注册等）：不自动重连，交给上层处理
+      console.error(`[octo-ws] CONNACK 拒绝：reasonCode=${reasonCode}（token 可能失效或 bot 未注册）`)
       this.needReconnect = false
       this.state = 'closed'
       if (this.ws) {
