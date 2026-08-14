@@ -6,6 +6,15 @@
 
 ### 新增
 
+- C3（已验收）：Bot 配置化与多 Bot 支持——`src/config/octo-config.ts`
+  （`octo.config.yaml` 解析：apiUrl + bots 列表；`OCTO_CONFIG` 覆盖路径；无配置文件回退
+  `OCTO_API_URL/OCTO_BOT_TOKEN/OCTO_BOT_UID` 环境变量）；`run-octo.ts` 多 bot 装配
+  （抽 `createBotBridge`：每 bot 独立 register + WS 连接，**共享同一 SdkDshAdapter**，
+  会话 key 按 accountId 隔离）；`octo.config.example.yaml` 配置模板 + README Quick start
+  （安装 → 复制模板填 bot → 启动三步，解决安装者上手路径）；`.gitignore` 排除配置文件
+  （botToken 不入库）。新增依赖 `yaml`。测试 77 passed（+16）。
+  实机：`octo.config.yaml` 启动 daemon，bot BlueWhale 装配 + WS 连接成功。
+
 - C2（已验收）：Octo WebSocket 通道最小 MVP——`src/bridge/octo/`（WuKongIM 二进制协议编解码 +
   WS 连接管理（DH+AES 握手/60s 心跳/指数退避重连/粘包解析）+ REST 最小集 registerBot/sendMessage/heartbeat +
   入站消息解析）；`octo-channel.ts` bridge（群 @bot 消息 → AgentAdapter.run → 文本回复，

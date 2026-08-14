@@ -10,6 +10,10 @@ lib/
 *.pem
 *.key
 
+# Local bot config — contains bot tokens
+octo.config.yaml
+octo.config.yml
+
 # Local dsh profile & state
 .dsh-octo/
 profiles/

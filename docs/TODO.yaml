@@ -134,15 +134,16 @@ stages:
         acceptance: "typecheck + lint + test + build 全绿（61 passed）；单测覆盖 WS 接入/消息解析/会话映射；实机已跑通（2026-08-14，bot dsh_octo_testbot_BlueWhale @ im.deepminer.com.cn）：register 换凭据 → WS 连接 → 群里 @bot 发消息 → dsh 回答（多轮记忆待补验）；实机修复：registerBot 补缺/withSdkProfileArgs 双链路统一/model 默认值/collectRun 去重"
       - id: C3
         title: Bot 配置化与多 Bot 支持
-        status: in_progress
+        status: done
         date: 2026-08-14
         prd: docs/prd/PRD-C3-bot-config.md
-        prd_status: 立项中
+        prd_status: 已验收
         modules:
           - src/config/octo-config.ts（octo.config.yaml 解析：apiUrl + bots 列表；OCTO_CONFIG 覆盖路径；无配置回退环境变量）
-          - run-octo.ts 多 bot 装配（每 bot 独立 register + WS 连接，共享 SdkDshAdapter）
+          - run-octo.ts 多 bot 装配（createBotBridge 抽离可测；每 bot 独立 register + WS 连接，共享 SdkDshAdapter）
+          - octo.config.example.yaml 模板 + README Quick start（安装者上手路径）
           - .gitignore 排除 octo.config.yaml（botToken 不入库）
-        acceptance: "四件套全绿；单测覆盖配置解析/默认值/校验/回退/多 bot 装配；实机配置文件启动 daemon 跑通"
+        acceptance: "四件套全绿（77 passed）；单测覆盖配置解析/默认值/校验/回退/多 bot 装配；实机配置文件启动 daemon 跑通（BlueWhale 已连接）"
       - id: C4
         title: 会话路由与并发
         status: todo

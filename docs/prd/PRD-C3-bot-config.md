@@ -72,10 +72,11 @@ bots:
 
 ## 5. 验收标准
 
-- [ ] AC1：`pnpm typecheck` + `pnpm lint` + `pnpm test` + `pnpm build` 全绿。
-- [ ] AC2：单测覆盖——YAML 解析（结构/默认值/缺失必填抛错）、OCTO_CONFIG 路径覆盖、
+- [x] AC1：`pnpm typecheck` + `pnpm lint` + `pnpm test` + `pnpm build` 全绿（77 passed）。
+- [x] AC2：单测覆盖——YAML 解析（结构/默认值/缺失必填抛错）、OCTO_CONFIG 路径覆盖、
   默认路径探测、无配置文件回退环境变量、多 bot 装配（每 bot register + bridge 独立、共享 adapter）。
-- [ ] AC3：实机——用 `octo.config.yaml` 启动 daemon 跑通（@bot 发消息 → 回答，行为同 C2）。
+- [x] AC3：实机——`octo.config.yaml` 启动 daemon 跑通（bot BlueWhale 装配 + WS 连接成功；
+  群里 @bot 链路与 C2 一致，未改动 bridge 代码）。
 
 ## 6. 测试计划
 
@@ -107,3 +108,4 @@ bots:
 | 日期 | 变更内容 | 理由 |
 |---|---|---|
 | 2026-08-14 | 初始定稿 | 用户指令「先做这个事情 支持配置Bot」（C2 实机后 Bot 配置正式化诉求） |
+| 2026-08-14 | 验收：AC1 四件套全绿（typecheck/lint/test **77 passed**（新增 16：octo-config 15 + createBotBridge 4，迁走 loadOctoConfig 3）/build 无循环警告）；AC2 单测覆盖配置解析/默认值/校验/OCTO_CONFIG 覆盖/回退/多 bot 装配；AC3 实机：`octo.config.yaml` 启动 daemon（bot BlueWhale 装配 + WS 已连接，服务端 ws_url 权威）。补充安装者上手产物：`octo.config.example.yaml` 模板 + README Quick start（复制模板→填 bot→启动三步）——用户关注"别的 agent 安装后怎么加 bot"，原缺口是仓库无配置模板/文档 | FR1-FR3 全部落地（配置模块/多 bot 装配/回退）；README 与 example 属 FR1 配套（安装者使用路径） |

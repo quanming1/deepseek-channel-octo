@@ -4,7 +4,55 @@
 Agent 桥接进 [Octo IM](https://github.com/Mininglamp-OSS)——dsh agent 成为 Octo 中的
 bot/队友：收发消息、执行任务、流式卡片、审批交互。
 
-> **状态**：原型前阶段。项目骨架与工作流已就位；桥接实现按 `docs/TODO.yaml` 的阶段计划推进。
+> **状态**：原型阶段。Octo WebSocket 通道 MVP 已实机跑通（C2）；bot 配置化与多 bot 支持（C3）。
+> 实现按 `docs/TODO.yaml` 的阶段计划推进。
+
+## Quick start
+
+Connect an Octo bot to a dsh agent in three steps.
+
+### 1. Install
+
+```bash
+npm install -g @deepseek-ai/dsh@0.1.0-rc.6   # dsh CLI
+npm install -g deepseek-channel-octo          # this package
+```
+
+### 2. Create a bot and configure it
+
+Create a bot in the Octo admin console — you get a **Bot ID** and a **Bot Token** (`bf_` prefix).
+
+Copy the config template and fill in your credentials:
+
+```bash
+cp octo.config.example.yaml octo.config.yaml
+```
+
+```yaml
+# octo.config.yaml
+apiUrl: https://your-octo-server.example/api
+bots:
+  - name: my-bot
+    botUid: xxxxxxxxxxxxx_bot
+    botToken: bf_your_bot_token_here
+```
+
+Add one entry per bot under `bots` to connect multiple bots — each gets its own
+WebSocket connection and shares the same dsh harness. `octo.config.yaml` is
+git-ignored (it contains secrets); the path can be overridden with `OCTO_CONFIG`.
+
+No config file? Legacy env vars are used as fallback:
+`OCTO_API_URL` / `OCTO_BOT_TOKEN` / `OCTO_BOT_UID`.
+
+### 3. Run
+
+```bash
+dsh-octo-bot octo run
+```
+
+Add the bot to a group and @mention it — the agent replies with the dsh answer.
+Each group maps to its own dsh session (`octo:<accountId>:<chatId>`), so the bot
+remembers the conversation per group (restart-safe).
 
 ## 工作流（Rondo 方法）
 
