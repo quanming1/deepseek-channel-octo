@@ -145,13 +145,25 @@ stages:
           - .gitignore 排除 octo.config.yaml（botToken 不入库）
         acceptance: "四件套全绿（77 passed）；单测覆盖配置解析/默认值/校验/回退/多 bot 装配；实机配置文件启动 daemon 跑通（BlueWhale 已连接）"
       - id: C4
+        title: 插件化架构重构（放弃 daemon，纯 dsh 插件形态）
+        status: in_progress
+        date: 2026-08-14
+        prd: docs/prd/PRD-C4-plugin-arch.md
+        prd_status: 立项中
+        modules:
+          - octo-channel 插件（Cordis bundle：apply 装配 Octo WS 长连接 + ctx.agents 直调 agent）
+          - Octo 接入层迁移（src/bridge/octo → 插件内 octo/，复用协议/WS/API/解析）
+          - 配置走 dsh 配置体系（Schema + profile patch；多 bot 列表）
+          - 退役：sdk-adapter/dsh-client/sdk-profile/run-octo/octo run/octo-sdk-server（SDK client 链路整体移除）
+        acceptance: "四件套全绿；spike 验证 ctx.agents + WS 长连接共存；插件装配进 profile 实机 @bot 收发消息；配置走 dsh 体系；单包可 dsh plugin add"
+      - id: C5
         title: 会话路由与并发
         status: todo
         modules:
           - src/session/（scope→sessionId 映射持久化，参照 dsh-lark-bot SessionStore）
           - src/bot/（active-runs 锁、排队、中断、审批）
         acceptance: 待立项细化
-      - id: C5
+      - id: C6
         title: 测试 CI 文档与发布
         status: todo
         modules:
