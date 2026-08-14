@@ -88,6 +88,21 @@ stages:
           - 消费者改命名空间访问（cli.ts / 测试）
           - AGENTS.md §3.2 Self-Export 规则
         acceptance: "typecheck + lint + test + build 全绿（无循环警告）；模块均 self-export；消费者命名空间访问；send 回归正常"
+      - id: F3
+        title: 冗余与死代码审查优化
+        status: in_progress
+        date: 2026-08-14
+        prd: docs/prd/PRD-F3-code-review.md
+        prd_status: approved
+        modules:
+          - 死代码清理（SendResult.ok、runSend 未消费返回值）
+          - 错误类基类抽取 + isKnownError 统一判别（src/agent/errors.ts）
+          - SDK 通知解析收敛（ChunkEvent/TurnEndEvent + chunkDeltaOf）
+          - sendPrompt IO 与纯函数分离（onText/onThinking 回调）
+          - 消费者改走目录聚合入口（cli.ts / cli.test.ts）
+          - 跨平台 PATH 分隔符修复（resolveDshBin）
+          - 注释与实现一致性修正
+        acceptance: "typecheck + lint + test + build 全绿；grep 无死字段/as never/直连子模块残留；send 实机回归正常"
 
   # ---- 阶段 C：Octo 通道集成（后续规划，暂不展开 PRD）----
   - id: C
