@@ -1,0 +1,23 @@
+# Dependencies / build output
+node_modules/
+dist/
+lib/
+
+# Env & secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local dsh profile & state
+.dsh-octo/
+profiles/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Test / debug artifacts
+coverage/
