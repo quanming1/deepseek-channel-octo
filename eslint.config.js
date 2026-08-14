@@ -13,6 +13,16 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // bin 启动器是 Node 脚本（process/console 全局），单独声明 globals
+    files: ['bin/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+  },
+  {
     rules: {
       // 代码注释写「为什么」；空 catch 必须说明吞掉了什么
       'no-empty': ['error', { allowEmptyCatch: true }],

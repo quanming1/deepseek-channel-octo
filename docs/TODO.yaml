@@ -45,8 +45,10 @@ stages:
     steps:
       - id: B1
         title: CLI 向 dsh 发送消息并接收回答
-        status: todo
+        status: done
+        date: 2026-08-14
         prd: docs/prd/PRD-B1-cli-messaging.md
+        prd_status: 已验收
         modules:
           - bin/dsh-octo-bot.mjs（CLI：send 子命令）
           - src/agent/（官方 @deepseek-ai/dsh-sdk-client 集成，中文注释）

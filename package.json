@@ -10,8 +10,12 @@
   "packageManager": "pnpm@11.16.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "dsh-octo-bot": "bin/dsh-octo-bot.mjs"
+  },
   "files": [
     "dist",
+    "bin",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"
@@ -41,5 +45,9 @@
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.0.0",
     "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-sdk-client": "0.1.0-rc.6",
+    "commander": "^15.0.0"
   }
 }
