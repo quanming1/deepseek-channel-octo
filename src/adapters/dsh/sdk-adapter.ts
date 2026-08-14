@@ -21,6 +21,7 @@ import type {
 } from '../types.js'
 import { DshClient } from '../../agent/dsh-client.js'
 import { Errors } from '../../agent/errors.js'
+import { SdkProfile } from '../../agent/sdk-profile.js'
 
 /** 单个 cwd 的 runtime 缓存条目 */
 interface RuntimeEntry {
@@ -73,8 +74,8 @@ export interface SdkAdapterOptions {
   launch: { command: string; args: string[] }
   /** 模型路由提供方（与 dsh profile 的 llm 配置一致） */
   provider: string
-  /** 默认模型（run 未指定 model 时使用） */
-  model: string
+  /** 模型名（可选；缺省由 dsh runtime 决定——与 CLI send 一致，不传 provider 名当模型名） */
+  model?: string
   /** 每轮最大 token 数（可选） */
   maxTokens?: number
   /** 可注入 harness 工厂（测试替身） */
@@ -91,7 +92,7 @@ export class SdkDshAdapter implements AgentAdapter {
 
   private readonly launch: SdkAdapterOptions['launch']
   private readonly provider: string
-  private readonly model: string
+  private readonly model: string | undefined
   private readonly maxTokens: number | undefined
   private readonly harnessFactory: (cwd: string) => DeepSeekHarness
   private readonly runtimes = new Map<string, RuntimeEntry>()
@@ -207,11 +208,14 @@ export class SdkDshAdapter implements AgentAdapter {
   }
 
   private createHarness(cwd: string): DeepSeekHarness {
+    // 与 DshClient.createHarness 对齐：--profile 加载 SDK runtime（C2 实机发现缺失导致
+    // dsh 报 "--profile <name> is required"，经 withSdkProfileArgs 统一补上）
+    const launch = SdkProfile.withSdkProfileArgs(this.launch)
     return new DeepSeekHarness({
-      launch: { command: this.launch.command, args: this.launch.args, cwd },
+      launch: { ...launch, cwd },
       cwd,
       provider: this.provider,
-      model: this.model,
+      ...(this.model === undefined ? {} : { model: this.model }),
       ...(this.maxTokens === undefined ? {} : { maxTokens: this.maxTokens }),
     })
   }

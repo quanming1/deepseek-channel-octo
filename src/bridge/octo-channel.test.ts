@@ -99,8 +99,9 @@ function makeBridge(overrides: {
 }
 
 describe('OctoChannelBridge', () => {
-  it('@bot 消息 → adapter.run（sessionId=octo:acct:<chatId>）→ 文本回复', async () => {
-    const { bridge, adapter, wsClient } = makeBridge({ onSend: () => {} })
+  it('@bot 消息 → adapter.run（sessionId=octo:acct:<chatId>）→ 回复只用 final_text（不重复拼接 text 增量）', async () => {
+    const sent: Array<{ channelId: string; content: string }> = []
+    const { bridge, adapter, wsClient } = makeBridge({ onSend: (channelId, content) => sent.push({ channelId, content }) })
     bridge.start()
     wsClient().deliver(groupMessage())
     // 等待事件循环完成异步 run + send
@@ -109,6 +110,12 @@ describe('OctoChannelBridge', () => {
     })
     const runOptions = (adapter.run as ReturnType<typeof vi.fn>).mock.calls[0]![0]
     expect(runOptions).toMatchObject({ prompt: '@bot 你好', sessionId: 'octo:acct:g123', cwd: '/tmp' })
+    await vi.waitFor(() => {
+      expect(sent.length).toBe(1)
+    })
+    // 事件流含 text 增量('你好') + final_text('你好，世界')——只应发 final_text，避免双份拼接
+    expect(sent[0]).toEqual({ channelId: 'g123', content: '你好，世界' })
+    bridge.stop()
   })
 
   it('非 @bot 消息 → 不触发 run', async () => {

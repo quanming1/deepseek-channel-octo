@@ -7,10 +7,17 @@
 ### 新增
 
 - C2（已验收）：Octo WebSocket 通道最小 MVP——`src/bridge/octo/`（WuKongIM 二进制协议编解码 +
-  WS 连接管理（DH+AES 握手/60s 心跳/指数退避重连/粘包解析）+ REST 最小集 sendMessage/heartbeat +
+  WS 连接管理（DH+AES 握手/60s 心跳/指数退避重连/粘包解析）+ REST 最小集 registerBot/sendMessage/heartbeat +
   入站消息解析）；`octo-channel.ts` bridge（群 @bot 消息 → AgentAdapter.run → 文本回复，
-  sessionId=`octo:<account>:<chatId>` 直接复用群号，多轮续跑）；`run-octo.ts` daemon（配置加载/
-  生命周期/优雅退出）+ CLI `octo run` 子命令。单测 55 条全绿；实机待 Octo 环境（清单见 PRD-C2）。
+  sessionId=`octo:<account>:<chatId>` 直接复用群号，多轮续跑）；`run-octo.ts` daemon（register 换 WS 凭据/
+  配置加载/生命周期/优雅退出）+ CLI `octo run` 子命令。单测 61 条全绿。
+  **实机已跑通**（2026-08-14，bot `dsh_octo_testbot_BlueWhale` @ im.deepminer.com.cn）：
+  群里 @bot 发消息 → dsh 回答；多轮记忆待补验。实机暴露并修复：
+  `registerBot` 补缺（bf_ token 不能直接 WS 握手，必须先 register 上线换 im_token/robot_id/ws_url）、
+  WS 地址以服务端权威（显式配置 > 服务端 > 推导三级优先级）、环境变量 trim（cmd set 尾随空格 → URL 405）、
+  `withSdkProfileArgs` 统一双链路 `--profile`（SdkDshAdapter 曾漏传）、SdkDshAdapter.model 改可选
+  （缺省由 runtime 决定，原默认值 `deepseek-official` 是 provider 名）、collectRun 去重
+  （text 增量与 final_text 双份拼接，只发 final_text）。坑记录见 PITFALLS 1.5/5.4/5.5/5.6/5.7。
 - C1（已验收）：AgentAdapter 抽象 + SDK runtime 桥接——
   `src/adapters/types.ts` 渠道无关契约（AgentEvent 判别联合 / AgentRunOptions 含 sessionId 一等参数）；
   `SdkDshAdapter`（harness 按 cwd 常驻缓存 + notification→AgentEvent 翻译，可注入 harnessFactory）；

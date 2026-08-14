@@ -128,10 +128,10 @@ stages:
         prd: docs/prd/PRD-C2-octo-channel.md
         prd_status: 已验收
         modules:
-          - src/bridge/octo/（api 最小集：sendMessage/heartbeat + WS 加密接入/心跳/重连/消息解析）
+          - src/bridge/octo/（api：registerBot/sendMessage/heartbeat + WS 加密接入/心跳/重连/消息解析）
           - src/bridge/octo-channel.ts（Octo 事件 → AgentAdapter.run → 文本回复；channel_id→sessionId 映射）
-          - src/bridge/run-octo.ts（daemon 启动：配置/生命周期/优雅退出）+ CLI octo run
-        acceptance: "typecheck + lint + test + build 全绿；单测覆盖 WS 接入/消息解析/会话映射；实机：群里 @bot 发消息 → dsh 回答 → 追问记住上下文（依赖 Octo 测试环境）"
+          - src/bridge/run-octo.ts（daemon 启动：register 换 WS 凭据 → 配置/生命周期/优雅退出）+ CLI octo run
+        acceptance: "typecheck + lint + test + build 全绿（61 passed）；单测覆盖 WS 接入/消息解析/会话映射；实机已跑通（2026-08-14，bot dsh_octo_testbot_BlueWhale @ im.deepminer.com.cn）：register 换凭据 → WS 连接 → 群里 @bot 发消息 → dsh 回答（多轮记忆待补验）；实机修复：registerBot 补缺/withSdkProfileArgs 双链路统一/model 默认值/collectRun 去重"
       - id: C3
         title: 会话路由与并发
         status: todo
