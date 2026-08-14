@@ -8,6 +8,9 @@
 
 - A1（已验收）：GitHub 公开仓库 `quanming1/deepseek-channel-octo` + TypeScript ESM 脚手架
   （tsconfig / tsup / vitest / ESLint），Apache-2.0 LICENSE，冒烟测试全链路验证通过。
+- A2（已验收）：Hello World 插件——Cordis bundle（`dsh.bundle` + `cordis.patch.yml`），
+  注册 `/hello` 命令（中文注释），已通过 `dsh plugin add` 真实安装进本地 profile，
+  启动日志确认 `[hello-plugin] plugin loaded!`。
 - Rondo 方法工作流：`AGENTS.md` 行为契约、`docs/TODO.yaml` 阶段计划（A dsh 接入 MVP /
   B 消息收发 MVP / C Octo 通道）、`docs/PROCESS.md` 六步闭环、`docs/prd/` 阶段 PRD。
 - Git Hooks：`.githooks/commit-msg` + `check_commit_msg.py`（按 TODO 阶段 id 校验提交规范）
