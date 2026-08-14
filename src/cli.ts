@@ -4,6 +4,9 @@
  * B1 阶段只有一个子命令 send：向本地 dsh 发送一条消息并流式接收回答。
  */
 import { Command } from 'commander'
+import { existsSync, readFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { createHarness, sendPrompt } from './agent/dsh-client.js'
 import { ensureSdkProfile, resolveDshBin } from './agent/sdk-profile.js'
 import { VERIFIED_AT } from './config/dsh-compat.js'
@@ -29,6 +32,21 @@ export function buildProgram(): Command {
   return program
 }
 
+/** 检查 DeepSeek API key 是否可用：环境变量 或 dsh 凭据文件（~/.dsh/.credentials.yaml）任一存在 */
+function apiKeyAvailable(): boolean {
+  if (process.env.DEEPSEEK_API_KEY) return true
+  try {
+    const credFile = join(homedir(), '.dsh', '.credentials.yaml')
+    if (!existsSync(credFile)) return false
+    const content = readFileSync(credFile, 'utf-8')
+    // 提取 DEEPSEEK_API_KEY 的值，非空即可用
+    const match = /DEEPSEEK_API_KEY:\s*(.+)/.exec(content)
+    return match !== null && match[1]!.trim().length > 0
+  } catch {
+    return false
+  }
+}
+
 /** send 子命令执行体 */
 export async function runSend(prompt: string, model?: string): Promise<number> {
   // 1. 检查环境：dsh 是否可用
@@ -38,9 +56,11 @@ export async function runSend(prompt: string, model?: string): Promise<number> {
     return 1
   }
 
-  // 2. 检查凭据：DEEPSEEK_API_KEY 必须存在（provider deepseek-official 读取）
-  if (!process.env.DEEPSEEK_API_KEY) {
-    console.error('[错误] 缺少 DEEPSEEK_API_KEY 环境变量（dsh 的 deepseek-official provider 需要）')
+  // 2. 检查凭据：环境变量 或 dsh 凭据文件（dsh 的 credentials 服务优先读凭据文件）
+  if (!apiKeyAvailable()) {
+    console.error('[错误] 缺少 DeepSeek API key。两种方式任选：')
+    console.error('       ① 环境变量：set DEEPSEEK_API_KEY=sk-xxx')
+    console.error('       ② dsh 凭据文件：写入 ~/.dsh/.credentials.yaml 的 DEEPSEEK_API_KEY')
     return 1
   }
 
