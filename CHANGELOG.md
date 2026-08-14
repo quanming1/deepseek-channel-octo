@@ -13,6 +13,8 @@
   消费者统一走目录聚合入口；修复 `resolveDshBin` 跨平台 PATH 分隔符
   （Windows `;` / POSIX `:`，抽 `pathSeparatorOf` 纯函数）；注释与实现一致性修正
   （apply 返回语义等）。新增 3 条回归测试（共 15 passed）。
+  后续补全：模块内部跨模块引用统一为命名空间对象访问
+  （`DshCompat.*`/`Errors.*`/`SdkProfile.*`，消除 5 处扁平成员导入）。
 - A1（已验收）：GitHub 公开仓库 `quanming1/deepseek-channel-octo` + TypeScript ESM 脚手架
   （tsconfig / tsup / vitest / ESLint），Apache-2.0 LICENSE，冒烟测试全链路验证通过。
 - A2（已验收）：Hello World 插件——Cordis bundle（`dsh.bundle` + `cordis.patch.yml`），
