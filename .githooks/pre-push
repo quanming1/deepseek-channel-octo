@@ -1,0 +1,47 @@
+#!/bin/sh
+# pre-push hook —— Git Flow 保护（全 PR 流，主文档 AGENTS.md §4 / docs/PROCESS.md）。
+#
+# 单 main 分支模型：
+#   - git push origin main             允许（本地 main 直接推送 = 发布流程）
+#   - git push origin feature/x:main   拒绝（禁止 feature 直接上 main，必须走 PR）
+#   - git push origin :main            拒绝（禁止删除远程 main）
+#   - git push origin feature/x        允许（feature 分支推送后在 GitHub 提 PR 合入 main）
+#   - 本地 main 直接 merge 任何分支后 push main  拒绝（main 只接受 PR 合入）
+#
+# 说明：GitHub free 账号的 private 仓库无法开启服务端 branch protection，
+# 此 hook 作为本地强制替代；clone 后需执行一次：
+#   git config core.hooksPath .githooks
+
+protected=refs/heads/main
+zero=0000000000000000000000000000000000000000
+
+while read local_ref local_oid remote_ref remote_oid; do
+  # main 保护：非 main 分支禁止直接 push 到 main；禁止删除 main
+  if [ "$remote_ref" = "$protected" ]; then
+    if [ "$local_ref" != "$protected" ]; then
+      echo "[拒绝] Git Flow 保护：禁止直接 push 到 main"
+      echo "        main 只接受 release/hotfix 合并后的发布推送（git push origin main）"
+      echo "        当前尝试：$local_ref -> $remote_ref"
+      exit 1
+    fi
+  fi
+
+  # main 保护：main -> main 时，本地领先的新增提交不得含本地 merge 提交
+  if [ "$local_ref" = "$protected" ] && [ "$remote_ref" = "$protected" ]; then
+    # 远端全 0 = 首次推送 main（仓库初始化），放行
+    if [ "$remote_oid" != "$zero" ]; then
+      for commit in $(git log --first-parent --format=%H "$remote_oid".."$local_oid"); do
+        # merge commit 有 >=2 个父提交：rev-list --parents 输出至少 3 个字段
+        set -- $(git rev-list --parents -n 1 "$commit")
+        if [ $# -ge 3 ]; then
+          echo "[拒绝] Git Flow 保护：main 禁止本地直接 merge（必须走 GitHub PR/MR）"
+          echo "        feature 与 main 的合入一律通过 GitHub Pull Request（Code Review）"
+          echo "        本地 main 不应产生 merge 提交：$(git log -1 --format=%s "$commit")"
+          exit 1
+        fi
+      done
+    fi
+  fi
+done
+
+exit 0

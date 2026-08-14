@@ -1,0 +1,125 @@
+# deepseek-channel-octo Development TODO (TODO.yaml)
+
+# Structured task list, organized by roadmap phases. Each step includes:
+#   modules / reference / acceptance criteria / status.
+# Status legend: done completed · in_progress in progress · todo not started
+# PRD-driven: before starting a phase, write its PRD (docs/prd/PRD-<phase>-<name>.md).
+# Consumers: .githooks/check_commit_msg.py validates that feat/fix scopes are real phase ids.
+
+meta:
+  status_legend:
+    done: Completed
+    in_progress: In progress
+    todo: Not started
+
+stages:
+  # ---- Phase A: Foundation ----
+  - id: A
+    name: Foundation
+    steps:
+      - id: A1
+        title: Project skeleton + CLI + config system
+        status: in_progress
+        prd: docs/prd/PRD-A1-project-skeleton.md
+        prd_status: draft
+        modules:
+          - package.json (ESM, TypeScript, node >= 22.19)
+          - bin/dsh-octo-bot.mjs (CLI entry: start / status / restart / stop / doctor)
+          - src/config/ (env, app-paths, dsh-compat single source of truth)
+        acceptance: "typecheck + lint + vitest pass; --help lists all commands; config loads from env/file with schema validation"
+      - id: A2
+        title: dsh runtime discovery and profile management
+        status: todo
+        prd: docs/prd/PRD-A2-dsh-runtime.md
+        modules:
+          - src/config/dsh-runtime.ts (dsh bin discovery, DSH_HOME resolution)
+          - src/config/dsh-compat.ts (pinned versions, verifiedAt)
+          - profile scaffold + pnpm install for dsh-sdk-jsonrpc-server
+        acceptance: probes discover dsh CLI; compat matrix matches package.json; profile installs and dumps config
+
+  # ---- Phase B: Bridge core ----
+  - id: B
+    name: Bridge Core
+    steps:
+      - id: B1
+        title: AgentAdapter contract + SDK runtime integration
+        status: todo
+        prd: docs/prd/PRD-B1-agent-adapter.md
+        modules:
+          - src/adapters/types.ts (AgentAdapter / AgentRun / AgentEvent)
+          - src/adapters/dsh/sdk-runtime.ts (subprocess launch, one runtime per cwd)
+          - src/adapters/dsh/sdk-adapter.ts (DeepSeekHarness client, session continuation)
+          - src/adapters/dsh/sdk-translate.ts (session.event -> AgentEvent)
+        acceptance: adapter runs a real prompt against a pinned dsh runtime; token-level stream events emitted; session(id) resume works
+      - id: B2
+        title: ACP approval route (optional)
+        status: todo
+        prd: docs/prd/PRD-B2-acp-approval.md
+        modules:
+          - src/adapters/dsh/acp-adapter.ts (permission requests -> ApprovalRequest)
+        acceptance: approval request surfaces via onApprovalRequest; allow/reject options map to outcomes
+
+  # ---- Phase C: Octo channel ----
+  - id: C
+    name: Octo Channel
+    steps:
+      - id: C1
+        title: Octo server WebSocket client + bot registration
+        status: todo
+        prd: docs/prd/PRD-C1-octo-channel.md
+        modules:
+          - src/bridge/channel.ts (Octo channel abstraction)
+          - src/bridge/octo-channel.ts (WebSocket connect, message events, bot identity)
+        acceptance: connects to octo-server WS; receives user messages; sends assistant messages; reconnects with backoff
+      - id: C2
+        title: Message model mapping and streaming delivery
+        status: todo
+        prd: docs/prd/PRD-C2-message-mapping.md
+        modules:
+          - src/bridge/run-flow.ts (prompt -> run -> stream -> done)
+          - media/attachments handling
+        acceptance: Octo message -> AgentRun prompt; AgentEvent stream -> Octo messages (text/thinking/tool/usage states)
+
+  # ---- Phase D: Sessions & concurrency ----
+  - id: D
+    name: Sessions & Concurrency
+    steps:
+      - id: D1
+        title: Session routing + queue + interruption
+        status: todo
+        prd: docs/prd/PRD-D1-sessions.md
+        modules:
+          - src/session/store.ts (chat/topic scope keys -> sessionId)
+          - src/bot/active-runs.ts + pending-queue.ts + run-policy.ts
+        acceptance: two chats run concurrently on separate sessions; /stop interrupts; queued messages merge per policy
+      - id: D2
+        title: Access control + approval cards
+        status: todo
+        prd: docs/prd/PRD-D2-access-approval.md
+        modules:
+          - src/config/access-manager.ts (allowlist /invite)
+          - src/card/approval-card.ts + question-card.ts
+        acceptance: allowlist enforced per chat; approval requests render as interactive cards with options
+
+  # ---- Phase E: Hardening ----
+  - id: E
+    name: Hardening
+    steps:
+      - id: E1
+        title: Tests, CI, and docs
+        status: todo
+        prd: docs/prd/PRD-E1-hardening.md
+        modules:
+          - vitest unit tests across modules; e2e against local octo-server
+          - .github/workflows/ci.yml (ubuntu + windows + macos matrix, lint/test/typecheck)
+          - upstream radar (check-dsh-upstream) + compat probe (probe-dsh-compat) CI jobs
+          - README complete + docs/COMPATIBILITY.md matrix
+        acceptance: CI green on all platforms; compat probe performs a real SDK handshake; README documents install/quickstart
+      - id: E2
+        title: Packaging and release
+        status: todo
+        prd: docs/prd/PRD-E2-release.md
+        modules:
+          - npm dual-package publish (deepseek-channel-octo), bin, files whitelist
+          - release:check gate (diff check + typecheck + test + build + upstream consistency)
+        acceptance: "npm pack installs cleanly; dsh-octo-bot start runs as a daemon; release flow produces a tagged version"
