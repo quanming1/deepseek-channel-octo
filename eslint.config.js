@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint'
  */
 export default tseslint.config(
   {
-    ignores: ['dist/', 'node_modules/', 'coverage/'],
+    ignores: ['dist/', 'node_modules/', 'coverage/', 'demo/'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -37,6 +37,21 @@ export default tseslint.config(
         {
           selector: 'ImportNamespaceSpecifier',
           message: '禁止星号导入（import * as X），使用具名导入',
+        },
+      ],
+    },
+  },
+  {
+    // 豁免：server 插件的 dsh-llm-deepseek 只有 named exports，cordis 插件
+    // 传递必须整模块引用（ctx.plugin(LlmDeepSeek, ...)），官方 server 同款写法
+    files: ['src/adapters/dsh/server/main.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'ImportNamespaceSpecifier[source.value="@deepseek-ai/dsh-llm-deepseek"]',
+          message: '允许 dsh-llm-deepseek 的整模块导入（cordis 插件传递惯例）',
         },
       ],
     },

@@ -110,10 +110,10 @@ stages:
     steps:
       - id: C1
         title: AgentAdapter 抽象 + SDK runtime 桥接（含 server 侧 resume）
-        status: in_progress
+        status: done
         date: 2026-08-14
         prd: docs/prd/PRD-C1-agent-adapter.md
-        prd_status: approved
+        prd_status: 已验收
         modules:
           - src/adapters/（AgentAdapter / AgentRun / AgentEvent 契约）
           - src/adapters/dsh/（SdkDshAdapter：harness 按 cwd 缓存、事件翻译）

@@ -6,10 +6,10 @@
 |---|---|
 | 阶段 | C1 |
 | 名称 | AgentAdapter 抽象 + SDK runtime 桥接（含 server 侧 resume） |
-| 状态 | approved |
+| 状态 | 已验收 |
 | 创建日期 | 2026-08-14 |
 | 定稿日期 | 2026-08-14 |
-| 验收日期 | （待填） |
+| 验收日期 | 2026-08-14 |
 | 关联文档 | docs/TODO.yaml 阶段 C1；docs/prd/PRD-B1-cli-messaging.md（B1 资产）；demo/demo-resume.mjs（可行性验证） |
 
 ## 1. 背景与目标
@@ -33,26 +33,26 @@
 
 ### 2.1 功能需求
 
-- [ ] FR1：**AgentAdapter 契约**（`src/adapters/types.ts`）——最小异步迭代器风格：
+- [x] FR1：**AgentAdapter 契约**（`src/adapters/types.ts`）——最小异步迭代器风格：
   - `AgentEvent`：判别联合（`system` 携带 sessionId / `text` 流式增量 / `thinking` 增量 /
     `final_text` 完整回答 / `error` 含原因 / `done` 含 terminationReason）。
   - `AgentRunOptions`：`{ runId, prompt, cwd, sessionId?, model?, stopGraceMs? }`——sessionId
     是一等参数（缺省由 adapter 生成）。
   - `AgentRun`：`{ runId, events: AsyncIterable<AgentEvent>, stop(): Promise<void>, waitForExit(timeoutMs?): Promise<boolean> }`。
   - `AgentAdapter` 接口：`{ id, displayName, run(options): AgentRun, dispose?(): Promise<void> }`。
-- [ ] FR2：**SdkDshAdapter 实现**（`src/adapters/dsh/sdk-adapter.ts`）——常驻形态：
+- [x] FR2：**SdkDshAdapter 实现**（`src/adapters/dsh/sdk-adapter.ts`）——常驻形态：
   harness 按 cwd 缓存（`Map<cwd, {harness}>`，参照 dsh-lark-bot `runtimeFor`）；`run()` 把 SDK
   notification 翻译为 `AgentEvent`（复用 B1 的 textDeltaOf/reasoningDeltaOf/turnErrorOf 语义）；
   `stop()` 关闭对应 runtime；`dispose()` 全量回收。sessionId 缺省生成 `session-<uuid>`（对齐 lark-bot 惯例）。
-- [ ] FR3：**自研 SDK server 插件**（`src/adapters/dsh/server-plugin/` 或独立目录，装进我们
+- [x] FR3：**自研 SDK server 插件**（`src/adapters/dsh/server-plugin/` 或独立目录，装进我们
   自管的 octo-sdk profile）——替换官方 `@deepseek-ai/dsh-sdk-jsonrpc-server` 的 create-only 行为：
   `getOrCreateSession(sessionId)` 改双分支——磁盘存档命中（`sessionPersistence.list()` 含该 id）
   → `agents.resume({resumeSessionId, agentOptions, setup})`；未命中 → `agents.create({sessionId, ...})`。
   JSON-RPC 方法面（initialize/prompt/notifications）与官方 server 保持兼容，SDK client 零改动。
   实现直接移植 DEMO 验证过的双分支逻辑（cwd 匹配校验沿用核心约束）。
-- [ ] FR4：**CLI `send --session <id>` 选项**——`runSend`/`sendPrompt` 透传 sessionId
+- [x] FR4：**CLI `send --session <id>` 选项**——`runSend`/`sendPrompt` 透传 sessionId
   （`harness.run(prompt, {sessionId})`），作为 FR3 的实机验收入口（两次独立进程同 id 续跑）。
-- [ ] FR5：**profile 管理扩展**——`sdk-profile.ts` 生成的 octo-sdk profile 的 patch 层从引用官方
+- [x] FR5：**profile 管理扩展**——`sdk-profile.ts` 生成的 octo-sdk profile 的 patch 层从引用官方
   server 包改为引用自研 server（bundle 化：`dsh.bundle` 声明 + patch insert），保留 llm-deepseek
   官方端点覆盖与 user-questions/hmr 禁用。
 
@@ -92,13 +92,13 @@
 
 ## 5. 验收标准
 
-- [ ] AC1：`pnpm typecheck` + `pnpm lint` + `pnpm test` + `pnpm build` 全绿（退出码 0）。
-- [ ] AC2：单测覆盖——AgentEvent 翻译（text/thinking/final/error/done）、sessionId 缺省生成与透传、
+- [x] AC1：`pnpm typecheck` + `pnpm lint` + `pnpm test` + `pnpm build` 全绿（退出码 0）。
+- [x] AC2：单测覆盖——AgentEvent 翻译（text/thinking/final/error/done）、sessionId 缺省生成与透传、
   server 双分支（fake persistence：有存档走 resume / 无存档走 create / 存档 cwd 不匹配报错）。
-- [ ] AC3：实机跨进程续跑——`dsh-octo-bot send "记住一个秘密词：X" --session demo-c1` 成功后，
+- [x] AC3：实机跨进程续跑——`dsh-octo-bot send "记住一个秘密词：X" --session demo-c1` 成功后，
   **新终端进程** `dsh-octo-bot send "秘密词是什么？" --session demo-c1` 答出 X（FR3+FR4 端到端证据，
   等价于 DEMO 场景 B 但走完整 CLI 链路）。
-- [ ] AC4：不传 `--session` 时行为与 B1 完全一致（回归，随机新会话单轮）。
+- [x] AC4：不传 `--session` 时行为与 B1 完全一致（回归，随机新会话单轮）。
 
 ## 6. 测试计划
 
@@ -134,3 +134,4 @@
 | 日期 | 变更内容 | 理由 |
 |---|---|---|
 | 2026-08-14 | 初始定稿 | 用户确认推进 C1（「demo 收尾（提交 demo/ + 踩坑记录 && 跟进进 PRD-C1」）；resume 双分支设计源自 demo/demo-resume.mjs 实测验证（场景 A 失败 / 场景 B 成功），踩坑记录见工作区 docs/PITFALLS.md 2.9 |
+| 2026-08-14 | 验收：AC1 四件套全绿（typecheck/lint/test 29 passed/build 无循环）；AC2 单测覆盖双分支（无存档 create/存档 resume/cwd 不匹配报错/缓存复用）与事件翻译与 sessionId 透传；AC3 实机跨进程续跑通过（两次独立 CLI 进程同 session demo-c1，第二次答出「蓝宝石」——自研 server 双分支接管）；AC4 不带 --session 回归 B1 行为（新建 session-xxx） | 全部 FR 落地（契约/Adapter/resume server/profile 挂载/CLI 选项），验收标准逐条核验通过；期间根治 PITFALLS 5.2（Windows spawnSync pnpm ENOENT → cmd.exe /c 包装） |

@@ -17,11 +17,11 @@ export const DSH_CLI_VERSION = '0.1.0-rc.6'
 /** 锁定的 SDK 客户端版本（必须与 package.json dependencies 一致，单测断言） */
 export const SDK_CLIENT_VERSION = '0.1.0-rc.6'
 
-/** 锁定的 SDK JSON-RPC server 版本（SDK profile 内安装） */
-export const SDK_SERVER_VERSION = '0.1.0-rc.6'
-
 /** SDK profile 名称（~/.dsh/profiles/<此值>） */
 export const SDK_PROFILE = 'octo-sdk'
+
+/** 自研 octo-sdk-server 插件的部署版本（升级 profile 结构时递增，触发幂等重建） */
+export const SERVER_PLUGIN_VERSION = '2'
 
 /** 最后真实验证日期（升级后更新） */
 export const VERIFIED_AT = '2026-08-14'

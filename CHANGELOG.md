@@ -6,6 +6,14 @@
 
 ### 新增
 
+- C1（已验收）：AgentAdapter 抽象 + SDK runtime 桥接——
+  `src/adapters/types.ts` 渠道无关契约（AgentEvent 判别联合 / AgentRunOptions 含 sessionId 一等参数）；
+  `SdkDshAdapter`（harness 按 cwd 常驻缓存 + notification→AgentEvent 翻译，可注入 harnessFactory）；
+  **自研 octo-sdk-server 插件**（替代官方 dsh-sdk-jsonrpc-server：getOrCreateSession 双分支——
+  磁盘存档命中走 `agents.resume`，跨进程恢复上下文，SDK client 零改动）；
+  `sdk-profile.ts` 改挂自研 server（版本化幂等重建 `SERVER_PLUGIN_VERSION`）；
+  CLI `send --session <id>` 选项。实机验证：两次独立进程同 session 续跑成功（第二次答出秘密词），
+  根治 PITFALLS 5.2（Windows spawnSync pnpm ENOENT → cmd.exe /c 包装）。测试 29 条。
 - F3（已验收）：冗余与死代码审查优化——删除死字段 `SendResult.ok`、`runSend` 未消费返回值；
   错误类抽 `TaggedError` 基类并新增 `isKnownError` 统一判别（CLI catch 收敛单分支）；
   SDK 通知解析收敛（`ChunkEvent`/`TurnEndEvent` 类型 + 私有 `chunkDeltaOf`）；

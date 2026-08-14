@@ -90,6 +90,22 @@ describe('SDK 通知翻译', () => {
   })
 })
 
+describe('sendPrompt 会话透传', () => {
+  it('传 sessionId 原样透传给 harness.run；不传则省略', async () => {
+    const recorded: Array<{ sessionId?: string }> = []
+    const fakeHarness = {
+      run: async (_prompt: string, options: { sessionId?: string }) => {
+        recorded.push(options)
+        return { sessionId: options.sessionId ?? 's-new', finalResponse: 'ok' }
+      },
+    }
+    await DshClient.sendPrompt(fakeHarness as never, 'x', {}, 'octo:acct:g1')
+    await DshClient.sendPrompt(fakeHarness as never, 'x', {})
+    expect(recorded[0]?.sessionId).toBe('octo:acct:g1')
+    expect(recorded[1]?.sessionId).toBeUndefined()
+  })
+})
+
 describe('结构化错误（TS-STYLE-GUIDE §8）', () => {
   it('DshError 带 tag 且 isInstance 收窄', () => {
     const error = new Errors.DshError('dsh 轮次失败')
