@@ -1,0 +1,6 @@
+# deepseek-channel-octo 组合包（bundle）patch 层。
+# 被 dsh 的 profile 加载：把 hello-plugin 插入插件树。
+# 按包名引用插件行，Node 模块解析会找到已安装的 deepseek-channel-octo。
+- insert:
+    - id: hello
+      name: deepseek-channel-octo
