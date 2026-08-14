@@ -18,9 +18,10 @@ stages:
     steps:
       - id: A1
         title: GitHub 开源仓库 + 项目脚手架
-        status: in_progress
+        status: done
+        date: 2026-08-14
         prd: docs/prd/PRD-A1-repo-scaffold.md
-        prd_status: approved
+        prd_status: 已验收
         modules:
           - GitHub 公开仓库 deepseek-channel-octo（在用户账号下）
           - package.json / tsconfig.json / vitest / tsup / ESLint

@@ -6,9 +6,9 @@
 
 ### 新增
 
-- Rondo 方法工作流：`AGENTS.md` 行为契约、`docs/TODO.yaml` 阶段计划（A 地基 / B 桥接核心 /
-  C Octo 通道 / D 会话与并发 / E 收尾）、`docs/PROCESS.md` 六步闭环、
-  `docs/prd/PRD-TEMPLATE.md` 与阶段 A1 PRD（草稿）。
+- A1（已验收）：GitHub 公开仓库 `quanming1/deepseek-channel-octo` + TypeScript ESM 脚手架
+  （tsconfig / tsup / vitest / ESLint），Apache-2.0 LICENSE，冒烟测试全链路验证通过。
+- Rondo 方法工作流：`AGENTS.md` 行为契约、`docs/TODO.yaml` 阶段计划（A dsh 接入 MVP /
+  B 消息收发 MVP / C Octo 通道）、`docs/PROCESS.md` 六步闭环、`docs/prd/` 阶段 PRD。
 - Git Hooks：`.githooks/commit-msg` + `check_commit_msg.py`（按 TODO 阶段 id 校验提交规范）
   与 `.githooks/pre-push`（单 main 保护），经 `core.hooksPath` 启用。
-- 初始提交：`docs(project): initialize Rondo method workflow files`。
