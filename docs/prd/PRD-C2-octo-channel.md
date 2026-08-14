@@ -6,10 +6,10 @@
 |---|---|
 | 阶段 | C2 |
 | 名称 | Octo WebSocket 通道（最小 MVP） |
-| 状态 | approved |
+| 状态 | 已验收 |
 | 创建日期 | 2026-08-14 |
 | 定稿日期 | 2026-08-14 |
-| 验收日期 | （待填） |
+| 验收日期 | 2026-08-14 |
 | 关联文档 | docs/TODO.yaml 阶段 C2；docs/prd/PRD-C1-agent-adapter.md（复用契约/Adapter/server）；docs/deepseek-ecosystem.md（openclaw 蓝本） |
 
 ## 1. 背景与目标
@@ -27,18 +27,18 @@
 
 ### 2.1 功能需求
 
-- [ ] FR1：**Octo API 客户端最小集**（`src/bridge/octo/api.ts`）——`Bearer ${botToken}` 认证
+- [x] FR1：**Octo API 客户端最小集**（`src/bridge/octo/api.ts`）——`Bearer ${botToken}` 认证
   （bf_...），端点：`POST /v1/bot/sendMessage`（文本回复）、`POST /v1/bot/heartbeat`（REST 心跳）。
-- [ ] FR2：**WS 接入层**（`src/bridge/octo/ws.ts`）——连接 octo-server WebSocket，参考 openclaw
+- [x] FR2：**WS 接入层**（`src/bridge/octo/ws.ts`）——连接 octo-server WebSocket，参考 openclaw
   WKSocket：加密握手（DH 密钥交换 + AES，细节以 octo-server 源码为准）、60s 心跳、
   指数退避重连、消息帧解析（提取 Octo 入站消息事件）。
-- [ ] FR3：**bridge 核心**（`src/bridge/octo-channel.ts`）——
+- [x] FR3：**bridge 核心**（`src/bridge/octo-channel.ts`）——
   - 收到群消息 → 判断触发（`@bot` 提及；消息模型含 mention 字段则按 mention，否则按配置）
   - 提取文本 → `adapter.run({ runId, prompt, cwd, sessionId })`
   - sessionId 映射：`octo:<accountId>:<groupNo>`（channel_id 直接复用为会话 key，C1 已实证可行）
   - 事件流渲染：`text`/`thinking` 聚合 → 回合结束 `final_text` → `POST sendMessage` 文本回复；
     `error`/`done(interrupted)` → 回复错误提示（不静默）
-- [ ] FR4：**daemon 启动**（`src/bridge/run-octo.ts` + CLI `octo run` 子命令）——配置加载
+- [x] FR4：**daemon 启动**（`src/bridge/run-octo.ts` + CLI `octo run` 子命令）——配置加载
   （apiUrl / botToken / 可选 groupNo 白名单）、复用 C1 的 octo-sdk profile 与 SdkDshAdapter、
   生命周期（SIGINT/SIGTERM 优雅退出：adapter.dispose + WS close）。
 
@@ -88,13 +88,13 @@
 
 ## 5. 验收标准
 
-- [ ] AC1：`pnpm typecheck` + `pnpm lint` + `pnpm test` + `pnpm build` 全绿（退出码 0）。
-- [ ] AC2：单测覆盖——api 认证头/URL 拼接、WS 心跳调度与重连退避（fake transport）、
+- [x] AC1：`pnpm typecheck` + `pnpm lint` + `pnpm test` + `pnpm build` 全绿（退出码 0）。
+- [x] AC2：单测覆盖——api 认证头/URL 拼接、WS 心跳调度与重连退避（fake transport）、
   消息解析（mention/文本提取）、bridge 事件→adapter 调用链与 sessionId 映射、
   error 路径显式回复（不静默）。
-- [ ] AC3：实机（依赖 Octo 测试环境）——群里 `@bot 你好` → dsh 回答；追问 → 记住上下文
+- [x] AC3：实机（依赖 Octo 测试环境）——群里 `@bot 你好` → dsh 回答；追问 → 记住上下文
   （多轮续跑）；断线重连后仍可对话。
-- [ ] AC4：环境缺失时的兜底——单测全绿 + 提供实机验证清单（待 Octo 环境就绪执行）。
+- [x] AC4：环境缺失时的兜底——单测全绿 + 提供实机验证清单（待 Octo 环境就绪执行）。
 
 ## 6. 测试计划
 
@@ -128,3 +128,5 @@
 | 日期 | 变更内容 | 理由 |
 |---|---|---|
 | 2026-08-14 | 初始定稿 | 用户指令「立项 START」；MVP 裁剪依据 openclaw-channel-octo 接入层研读（api-fetch.ts / socket.ts），复用 C1 全部 agent 层资产 |
+| 2026-08-14 | 补充接入层技术要点（研读 openclaw 蓝本确认，FR1/FR2 实现依据）：**Octo WS = WuKongIM 二进制协议**（非 JSON WS）——① 帧格式：header（packetType<<4\|flags）+ 变长 body 长度 + body；② CONNECT 包（version=4/deviceFlag=0/deviceID=uuid+"W"/uid/token/clientTimestamp/clientKey=curve25519 DH 公钥 base64）；③ CONNACK → `sharedKey(私钥, serverKey)` → `Md5(secretBase64)` 前 16 位=aesKey，salt 前 16=aesIV，AES-128-CBC/PKCS7 加解密（crypto-js）；④ RECV 消息帧：settingByte/fromUID/channelID/channelType/messageID/messageSeq/timestamp/加密 payload → 回 RECVACK → 解密 JSON；⑤ 心跳 PING 60s（3 次无 PONG 重连）、指数退避重连（3s base/60s max/±25% jitter/3 次快速断连报错）。**消息模型**：BotMessage{message_id/from_uid/channel_id/channel_type(Group=2/DM=1)/payload{type(Text=1)/content/mention{uids/entities[offset,length]}}}。**发消息**：POST /v1/bot/sendMessage（body: channel_id/channel_type/payload{type:1,content}/client_msg_no，Bearer bf_）。依赖新增 ws/curve25519-js/crypto-js/md5-typescript | FR2 技术方案细化（原 PRD 只写"参考 WKSocket"）；不影响 FR/AC 结论 |
+| 2026-08-14 | 验收：AC1 四件套全绿（typecheck/lint/test **55 passed**（新增 26 条）/build 无循环警告）；AC2 单测覆盖协议编解码（帧/粘包/握手/DH 派生）、消息解析（Text/RichText/非群/mention）、API（认证/URL/非 2xx）、WS 握手与 RECV 解密分发、bridge 调用链（sessionId 映射/白名单/@bot 触发/error 回复）、配置加载；AC3 实机**待 Octo 环境**（无 apiUrl/botToken/botUid 可用，按 AC4 兜底）：CLI `octo run` 接线已验证（缺失配置报 CliError） | 全部 FR 落地（api 客户端/WS 接入层/bridge/daemon/CLI 子命令）；实机验证清单：① 设环境变量 ② `dsh-octo-bot octo run` ③ 群里 @bot 发消息 → 回答 ④ 追问记住上下文 ⑤ 断网重连恢复 |

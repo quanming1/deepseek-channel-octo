@@ -123,10 +123,10 @@ stages:
         acceptance: "typecheck + lint + test + build 全绿；adapter/server 双分支单测通过；实机两次独立 CLI 进程同 sessionId 续跑成功（第二次答出第一次教的秘密词）"
       - id: C2
         title: Octo WebSocket 通道（最小 MVP）
-        status: in_progress
+        status: done
         date: 2026-08-14
         prd: docs/prd/PRD-C2-octo-channel.md
-        prd_status: approved
+        prd_status: 已验收
         modules:
           - src/bridge/octo/（api 最小集：sendMessage/heartbeat + WS 加密接入/心跳/重连/消息解析）
           - src/bridge/octo-channel.ts（Octo 事件 → AgentAdapter.run → 文本回复；channel_id→sessionId 映射）

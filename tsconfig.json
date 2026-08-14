@@ -11,6 +11,7 @@
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
 
     /* 构建产物 */
