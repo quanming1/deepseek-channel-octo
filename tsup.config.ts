@@ -6,7 +6,7 @@ import { defineConfig } from 'tsup'
  * - 插件最终作为 npm 包被 dsh 安装，入口为 src/index.ts
  */
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/index.ts', 'src/cli.ts'],
   format: ['esm'],
   dts: true,
   clean: true,

@@ -11,6 +11,9 @@
 - A2（已验收）：Hello World 插件——Cordis bundle（`dsh.bundle` + `cordis.patch.yml`），
   注册 `/hello` 命令（中文注释），已通过 `dsh plugin add` 真实安装进本地 profile，
   启动日志确认 `[hello-plugin] plugin loaded!`。
+- B1（已验收）：CLI 消息收发 MVP——`dsh-octo-bot send <prompt>` 经官方
+  `@deepseek-ai/dsh-sdk-client`（JSON-RPC）向本地 dsh 发消息并流式接收回答；
+  版本锁定单一事实来源 `dsh-compat.ts`；AC4 真实模型调用待 `DEEPSEEK_API_KEY` 补验。
 - Rondo 方法工作流：`AGENTS.md` 行为契约、`docs/TODO.yaml` 阶段计划（A dsh 接入 MVP /
   B 消息收发 MVP / C Octo 通道）、`docs/PROCESS.md` 六步闭环、`docs/prd/` 阶段 PRD。
 - Git Hooks：`.githooks/commit-msg` + `check_commit_msg.py`（按 TODO 阶段 id 校验提交规范）

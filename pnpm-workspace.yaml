@@ -15,6 +15,12 @@ minimumReleaseAgeExclude:
   - '@deepseek-ai/dsh-timeout@0.1.0-rc.6'
   - '@deepseek-ai/dsh-typert-protocol@0.1.0-rc.6'
   - '@deepseek-ai/schemastery@3.18.1'
+  - '@deepseek-ai/dsh-code-runtime@0.1.0-rc.6'
+  - '@deepseek-ai/dsh-sdk-client@0.1.0-rc.6'
+  - '@deepseek-ai/dsh-sdk-protocol@0.1.0-rc.6'
+  - '@deepseek-ai/dsh-subagent@0.1.0-rc.6'
+  - '@deepseek-ai/dsh-tools@0.1.0-rc.6'
+  - '@deepseek-ai/dsh-user-approval@0.1.0-rc.6'
 # pnpm workspace 配置（pnpm 11）
 # onlyBuiltDependencies：允许 esbuild 运行 postinstall（tsup 构建必需）。
 # pnpm 10+ 默认拒绝依赖的构建脚本，需显式放行。
