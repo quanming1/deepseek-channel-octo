@@ -7,10 +7,8 @@ import { Command } from 'commander'
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { DshClient } from './agent/dsh-client.js'
-import { SdkProfile } from './agent/sdk-profile.js'
-import { DshCompat } from './config/dsh-compat.js'
-import { Errors } from './agent/errors.js'
+import { DshClient, Errors, SdkProfile } from './agent/index.js'
+import { DshCompat } from './config/index.js'
 
 /** 构建 CLI 程序（供 bin 调用与测试复用） */
 export function buildProgram(): Command {
@@ -30,13 +28,8 @@ export function buildProgram(): Command {
       try {
         await runSend(prompt, opts.model)
       } catch (error) {
-        // 按结构化错误 tag 分支显示；未知错误冒泡为通用失败
-        if (Errors.CliError.isInstance(error)) {
-          console.error(`[错误] ${error.message}`)
-          process.exitCode = 1
-          return
-        }
-        if (Errors.DshError.isInstance(error)) {
+        // 已知业务错误：打印信息后非零退出；未知错误冒泡为通用失败
+        if (Errors.isKnownError(error)) {
           console.error(`[错误] ${error.message}`)
           process.exitCode = 1
           return
@@ -55,16 +48,16 @@ function apiKeyAvailable(): boolean {
     const credFile = join(homedir(), '.dsh', '.credentials.yaml')
     if (!existsSync(credFile)) return false
     const content = readFileSync(credFile, 'utf-8')
-    // 提取 DEEPSEEK_API_KEY 的值，非空即可用
-    const match = /DEEPSEEK_API_KEY:\s*(.+)/.exec(content)
-    return match !== null && match[1]!.trim().length > 0
+    // 提取 DEEPSEEK_API_KEY 的值（非空白 token），非空即可用
+    const value = /DEEPSEEK_API_KEY:\s*(\S+)/.exec(content)?.[1] ?? ''
+    return value.length > 0
   } catch {
     return false
   }
 }
 
 /** send 子命令执行体：失败时抛结构化错误（CliError / DshError），由 action 统一处理 */
-export async function runSend(prompt: string, model?: string): Promise<number> {
+export async function runSend(prompt: string, model?: string): Promise<void> {
   // 1. 检查环境：dsh 是否可用
   const dshBin = SdkProfile.resolveDshBin()
   if (!dshBin) {
@@ -85,13 +78,13 @@ export async function runSend(prompt: string, model?: string): Promise<number> {
 
   // 5. 发送消息，流式输出
   try {
-    // 思考增量以灰色风格输出到 stderr（不污染 stdout 的回答正文）
-    const result = await DshClient.sendPrompt(harness, prompt, (delta) => {
-      process.stderr.write(`\u001b[2m${delta}\u001b[0m`)
+    const result = await DshClient.sendPrompt(harness, prompt, {
+      // 回答正文输出到 stdout；思考增量以灰色风格输出到 stderr（不污染正文）
+      onText: (delta) => process.stdout.write(delta),
+      onThinking: (delta) => process.stderr.write(`\u001b[2m${delta}\u001b[0m`),
     })
     process.stdout.write('\n')
     console.log(`\n[dsh-octo-bot] session=${result.sessionId} 兼容验证日期=${DshCompat.VERIFIED_AT}`)
-    return 0
   } finally {
     // 6. 关闭 harness（回收子进程）
     await harness.close()

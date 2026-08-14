@@ -90,10 +90,10 @@ stages:
         acceptance: "typecheck + lint + test + build 全绿（无循环警告）；模块均 self-export；消费者命名空间访问；send 回归正常"
       - id: F3
         title: 冗余与死代码审查优化
-        status: in_progress
+        status: done
         date: 2026-08-14
         prd: docs/prd/PRD-F3-code-review.md
-        prd_status: approved
+        prd_status: 已验收
         modules:
           - 死代码清理（SendResult.ok、runSend 未消费返回值）
           - 错误类基类抽取 + isKnownError 统一判别（src/agent/errors.ts）

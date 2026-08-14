@@ -102,12 +102,18 @@ export async function ensureSdkProfile(env: NodeJS.ProcessEnv = process.env): Pr
     await writeFile(join(root, 'cordis.patch.yml'), patchYamlFor(), 'utf-8')
   }
 
-  // 安装依赖（pnpm；失败时给出明确错误）
+  // 安装依赖（pnpm；失败时给出明确错误，含底层根因）
   const result = spawnSync('pnpm', ['install'], { cwd: root, stdio: 'inherit', encoding: 'utf-8' })
-  if (result.status !== 0) {
-    throw new DshError(`SDK profile 依赖安装失败（${root}），请检查 pnpm 与网络`)
+  if (result.error || result.status !== 0) {
+    const cause = result.error?.message ?? `pnpm 退出码 ${String(result.status)}`
+    throw new DshError(`SDK profile 依赖安装失败（${root}）：${cause}，请检查 pnpm 与网络`)
   }
   return root
+}
+
+/** PATH 条目分隔符：Windows 为分号、POSIX 为冒号（参数化便于跨平台单测） */
+export function pathSeparatorOf(isWindows: boolean): string {
+  return isWindows ? ';' : ':'
 }
 
 /** 在 PATH 中解析 dsh 可执行文件路径（Windows 优先 .cmd/.exe；POSIX 用无扩展名脚本） */
@@ -115,7 +121,7 @@ export function resolveDshBin(env: NodeJS.ProcessEnv = process.env): string | un
   const isWindows = process.platform === 'win32'
   // Windows：npm 生成的 dsh 是无扩展名的 sh 脚本（不可执行），必须用 dsh.cmd
   const names = isWindows ? ['dsh.cmd', 'dsh.exe', 'dsh'] : ['dsh']
-  const pathEntries = (env.PATH ?? '').split(';')
+  const pathEntries = (env.PATH ?? '').split(pathSeparatorOf(isWindows))
   for (const dir of pathEntries) {
     if (!dir) continue
     for (const name of names) {

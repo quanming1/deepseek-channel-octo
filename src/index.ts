@@ -22,7 +22,10 @@ export const inject = ['commands']
 /** Hello World 命令的返回文案（测试断言依赖此常量） */
 export const HELLO_MESSAGE = 'Hello from deepseek-channel-octo!'
 
-/** 插件初始化：注册能力，返回清理函数（插件卸载时自动调用） */
+/**
+ * 插件初始化：注册能力。
+ * 无需返回清理函数——命令注册由框架管理，本插件没有需要手动释放的资源。
+ */
 export function apply(ctx: Context): void {
   // 加载日志：验证插件被 dsh 实际加载（stdout 约定，供启动日志观察）
   console.log('[hello-plugin] plugin loaded!')
