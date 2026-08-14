@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { DshCompat } from './config/dsh-compat.js'
-import { SdkProfile } from './agent/sdk-profile.js'
-import { DshClient } from './agent/dsh-client.js'
-import { Errors } from './agent/errors.js'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import type { HarnessNotification } from '@deepseek-ai/dsh-sdk-client'
+import { DshClient, Errors, SdkProfile } from './agent/index.js'
+import { DshCompat } from './config/index.js'
 
 /**
  * B1 单测：版本一致性、profile 生成、SDK 通知翻译。
@@ -20,10 +20,27 @@ describe('dsh-compat 版本一致性', () => {
   })
 })
 
-describe('sdk-profile 路径', () => {
+describe('sdk-profile 路径与平台', () => {
   it('profile 根目录解析到 $DSH_HOME/profiles/octo-sdk', () => {
     const root = SdkProfile.sdkProfileRoot({ DSH_HOME: '/tmp/dsh-home' })
     expect(root.replace(/\\/g, '/')).toBe('/tmp/dsh-home/profiles/octo-sdk')
+  })
+
+  it('pathSeparatorOf 按平台返回 PATH 分隔符', () => {
+    expect(SdkProfile.pathSeparatorOf(true)).toBe(';')
+    expect(SdkProfile.pathSeparatorOf(false)).toBe(':')
+  })
+
+  // resolveDshBin 的 Windows 分支：npm 生成的 dsh 无扩展名不可执行，必须解析 dsh.cmd
+  it.skipIf(process.platform !== 'win32')('resolveDshBin 在 PATH 中解析 dsh.cmd（Windows）', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dsh-octo-bin-'))
+    try {
+      writeFileSync(join(dir, 'dsh.cmd'), '@echo off\n', 'utf-8')
+      const found = SdkProfile.resolveDshBin({ PATH: dir })
+      expect(found).toBe(join(dir, 'dsh.cmd'))
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })
 
@@ -38,7 +55,7 @@ describe('SDK 通知翻译', () => {
         },
       },
     }
-    expect(DshClient.textDeltaOf(notification as never)).toBe('你好')
+    expect(DshClient.textDeltaOf(notification as unknown as HarnessNotification)).toBe('你好')
   })
 
   it('reasoning-delta 提取思考增量', () => {
@@ -51,12 +68,12 @@ describe('SDK 通知翻译', () => {
         },
       },
     }
-    expect(DshClient.reasoningDeltaOf(notification as never)).toBe('思考中')
+    expect(DshClient.reasoningDeltaOf(notification as unknown as HarnessNotification)).toBe('思考中')
   })
 
   it('非文本事件返回 null', () => {
     const notification = { method: 'session.event', params: { event: { type: 'tool/call', data: {} } } }
-    expect(DshClient.textDeltaOf(notification as never)).toBeNull()
+    expect(DshClient.textDeltaOf(notification as unknown as HarnessNotification)).toBeNull()
   })
 
   it('turn/end 错误提取轮次失败信息', () => {
@@ -69,7 +86,7 @@ describe('SDK 通知翻译', () => {
         },
       },
     }
-    expect(DshClient.turnErrorOf(notification as never)).toBe('AUTH: Invalid API key')
+    expect(DshClient.turnErrorOf(notification as unknown as HarnessNotification)).toBe('AUTH: Invalid API key')
   })
 })
 
@@ -86,6 +103,12 @@ describe('结构化错误（TS-STYLE-GUIDE §8）', () => {
     expect(error.tag).toBe('CliError')
     expect(Errors.CliError.isInstance(error)).toBe(true)
     expect(Errors.CliError.isInstance(new Error('普通错误'))).toBe(false)
+  })
+
+  it('isKnownError 统一判别已知业务错误', () => {
+    expect(Errors.isKnownError(new Errors.DshError('x'))).toBe(true)
+    expect(Errors.isKnownError(new Errors.CliError('x'))).toBe(true)
+    expect(Errors.isKnownError(new Error('普通错误'))).toBe(false)
   })
 
   it('异步失败路径可被 toMatchObject 按 tag 断言', async () => {

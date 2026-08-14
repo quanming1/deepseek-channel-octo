@@ -9,48 +9,66 @@
 
 // Self-Export 命名空间（TS-STYLE-GUIDE §3）：消费者用 DshClient.xxx 访问
 export * as DshClient from './dsh-client.js'
-import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
-import type { HarnessNotification } from '@deepseek-ai/dsh-sdk-client'
+import {
+  DeepSeekHarness,
+  type DeepSeekHarnessOptions,
+  type HarnessNotification,
+} from '@deepseek-ai/dsh-sdk-client'
 import { SDK_PROFILE } from '../config/dsh-compat.js'
-import type { DeepSeekHarnessOptions } from '@deepseek-ai/dsh-sdk-client'
 import { dshLaunchSpec } from './sdk-profile.js'
 import { DshError } from './errors.js'
 
 /** 一次 send 的执行结果 */
 export interface SendResult {
   sessionId: string
+  /** 完整回答文本（非流式消费者用；CLI 已流式输出可忽略） */
   finalResponse: string
-  /** 是否有错误发生 */
-  ok: boolean
+}
+
+/** sendPrompt 的回调选项：增量输出目的地由调用方决定（本模块不直接写 stdout） */
+export interface SendOptions {
+  /** 文本增量回调（回答正文） */
+  onText?: (delta: string) => void
+  /** 思考增量回调（用于展示处理中状态） */
+  onThinking?: (delta: string) => void
+}
+
+/** session.event 通知中 assistant/chunk 事件的负载形状（按需子集） */
+type ChunkEvent = {
+  type?: string
+  data?: { chunk?: { type?: string; text?: string } }
+}
+
+/** session.event 通知中 turn/end 事件的负载形状（按需子集） */
+type TurnEndEvent = {
+  type?: string
+  data?: { reason?: { kind?: string; error?: { message?: string } } }
+}
+
+/** 从 assistant/chunk 通知提取指定类型的增量文本；非目标通知返回 null */
+function chunkDeltaOf(notification: HarnessNotification, deltaType: 'text-delta' | 'reasoning-delta'): string | null {
+  if (notification.method !== 'session.event') return null
+  const event = notification.params.event as ChunkEvent | undefined
+  if (event?.type !== 'assistant/chunk') return null
+  const chunk = event.data?.chunk
+  if (chunk?.type !== deltaType || !chunk.text) return null
+  return chunk.text
 }
 
 /** 解析 notification 中的文本增量（assistant/chunk text-delta），无则返回 null */
 export function textDeltaOf(notification: HarnessNotification): string | null {
-  if (notification.method !== 'session.event') return null
-  const event = notification.params.event as { type?: string; data?: { chunk?: { type?: string; text?: string } } } | undefined
-  if (event?.type !== 'assistant/chunk') return null
-  const chunk = event.data?.chunk
-  if (chunk?.type !== 'text-delta' || !chunk.text) return null
-  return chunk.text
+  return chunkDeltaOf(notification, 'text-delta')
 }
 
 /** 解析 notification 中的思考增量（reasoning-delta），用于展示处理中状态 */
 export function reasoningDeltaOf(notification: HarnessNotification): string | null {
-  if (notification.method !== 'session.event') return null
-  const event = notification.params.event as { type?: string; data?: { chunk?: { type?: string; text?: string } } } | undefined
-  if (event?.type !== 'assistant/chunk') return null
-  const chunk = event.data?.chunk
-  if (chunk?.type !== 'reasoning-delta' || !chunk.text) return null
-  return chunk.text
+  return chunkDeltaOf(notification, 'reasoning-delta')
 }
 
 /** 解析 notification 中的轮次错误（turn/end kind=error），无则返回 null */
 export function turnErrorOf(notification: HarnessNotification): string | null {
   if (notification.method !== 'session.event') return null
-  const event = notification.params.event as {
-    type?: string
-    data?: { reason?: { kind?: string; error?: { message?: string } } }
-  } | undefined
+  const event = notification.params.event as TurnEndEvent | undefined
   if (event?.type !== 'turn/end') return null
   const reason = event.data?.reason
   if (reason?.kind !== 'error') return null
@@ -87,30 +105,31 @@ export async function createHarness(
 }
 
 /**
- * 发送一条 prompt，流式打印文本增量到 stdout，返回最终回答。
+ * 发送一条 prompt，把 token 级增量翻译为回调输出，返回最终回答。
  * @param harness 已启动的 harness
  * @param prompt 用户消息
- * @param onThinking 思考增量回调（可选，如 CLI 展示处理中状态）
+ * @param options 回调选项（onText / onThinking，输出目的地由调用方决定）
+ * @throws DshError 轮次失败或空响应（防静默失败）
  */
 export async function sendPrompt(
   harness: DeepSeekHarness,
   prompt: string,
-  onThinking?: (delta: string) => void,
+  options: SendOptions = {},
 ): Promise<SendResult> {
   // 收集轮次错误：dsh 静默失败（如认证失败）必须显式暴露，不能返回空回答假装成功
   let turnError: string | null = null
 
   const result = await harness.run(prompt, {
-    // 通知观察者：把 token 级增量翻译为流式输出；捕获轮次错误
+    // 通知观察者：把 token 级增量翻译为回调；捕获轮次错误
     onNotification: (notification) => {
       const text = textDeltaOf(notification)
       if (text !== null) {
-        process.stdout.write(text)
+        options.onText?.(text)
         return
       }
       const reason = reasoningDeltaOf(notification)
-      if (reason !== null && onThinking) {
-        onThinking(reason)
+      if (reason !== null) {
+        options.onThinking?.(reason)
         return
       }
       const error = turnErrorOf(notification)
@@ -130,6 +149,5 @@ export async function sendPrompt(
   return {
     sessionId: result.sessionId,
     finalResponse: result.finalResponse,
-    ok: true,
   }
 }

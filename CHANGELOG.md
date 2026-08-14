@@ -6,6 +6,13 @@
 
 ### 新增
 
+- F3（已验收）：冗余与死代码审查优化——删除死字段 `SendResult.ok`、`runSend` 未消费返回值；
+  错误类抽 `TaggedError` 基类并新增 `isKnownError` 统一判别（CLI catch 收敛单分支）；
+  SDK 通知解析收敛（`ChunkEvent`/`TurnEndEvent` 类型 + 私有 `chunkDeltaOf`）；
+  `sendPrompt` 改回调式输出（`SendOptions.onText/onThinking`，IO 与纯函数分离）；
+  消费者统一走目录聚合入口；修复 `resolveDshBin` 跨平台 PATH 分隔符
+  （Windows `;` / POSIX `:`，抽 `pathSeparatorOf` 纯函数）；注释与实现一致性修正
+  （apply 返回语义等）。新增 3 条回归测试（共 15 passed）。
 - A1（已验收）：GitHub 公开仓库 `quanming1/deepseek-channel-octo` + TypeScript ESM 脚手架
   （tsconfig / tsup / vitest / ESLint），Apache-2.0 LICENSE，冒烟测试全链路验证通过。
 - A2（已验收）：Hello World 插件——Cordis bundle（`dsh.bundle` + `cordis.patch.yml`），
