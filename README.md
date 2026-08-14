@@ -28,6 +28,16 @@ git config core.hooksPath .githooks
 
 单 main 全 PR 流：feature 分支从 `main` 切出，仅经 GitHub PR 合入。见 `AGENTS.md` §4。
 
+## 开发
+
+```bash
+pnpm install        # 安装依赖（pnpm 11，Node >= 22.19）
+pnpm typecheck      # 类型检查（tsc --noEmit）
+pnpm lint           # ESLint
+pnpm test           # vitest 单元测试
+pnpm build          # tsup 构建 -> dist/
+```
+
 ## 许可证
 
-Apache-2.0（计划中；提交 Mininglamp-OSS 前确认）。
+Apache-2.0。

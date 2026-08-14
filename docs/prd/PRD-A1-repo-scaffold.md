@@ -99,3 +99,4 @@
 | 日期 | 变更内容 | 理由 |
 |---|---|---|
 | 2026-08-14 | 初始定稿（approved） | 用户指令：先做 dsh Hello World 插件 MVP，本阶段为工程基座 |
+| 2026-08-14 | 开发完成：脚手架落地，typecheck/lint/test/build/import 全绿 | 记录 A1 开发收尾（AC1-AC6 已验证） |
