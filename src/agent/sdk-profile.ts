@@ -99,15 +99,29 @@ export async function ensureSdkProfile(env: NodeJS.ProcessEnv = process.env): Pr
   return root
 }
 
-/** 在 PATH 中解析 dsh 可执行文件路径 */
+/** 在 PATH 中解析 dsh 可执行文件路径（Windows 优先 .cmd/.exe；POSIX 用无扩展名脚本） */
 export function resolveDshBin(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const isWindows = process.platform === 'win32'
+  // Windows：npm 生成的 dsh 是无扩展名的 sh 脚本（不可执行），必须用 dsh.cmd
+  const names = isWindows ? ['dsh.cmd', 'dsh.exe', 'dsh'] : ['dsh']
   const pathEntries = (env.PATH ?? '').split(';')
   for (const dir of pathEntries) {
     if (!dir) continue
-    for (const name of ['dsh', 'dsh.cmd', 'dsh.exe']) {
+    for (const name of names) {
       const candidate = resolve(dir, name)
       if (existsSync(candidate)) return candidate
     }
   }
   return undefined
+}
+
+/**
+ * 把 dsh 可执行路径转换为 Node spawn 可执行的 command+args。
+ * Windows 的 .cmd 无法被 node spawn 直接执行，需经 cmd.exe /c 包装。
+ */
+export function dshLaunchSpec(dshBin: string): { command: string; args: string[] } {
+  if (process.platform === 'win32' && dshBin.toLowerCase().endsWith('.cmd')) {
+    return { command: process.env.ComSpec ?? 'cmd.exe', args: ['/c', dshBin] }
+  }
+  return { command: dshBin, args: [] }
 }
