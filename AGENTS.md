@@ -24,13 +24,83 @@
 5. 只改任务范围内的文件；不做用户没要求的额外改动。
 6. 同一问题反复改不好就停下，回到初始假设与失败证据重新判断，换方向。
 
-## 3. 代码风格
+## 3. 代码风格（TS-STYLE-GUIDE）
+
+> 本仓库 TypeScript 风格基线蒸馏自 opencode，完整规范见 `E:/opencode-src/TS-STYLE-GUIDE.md`。
+> 以下为核心规则；冲突时以本节为准，未覆盖处回源文档。
+
+### 3.1 核心原则
+
+- **类型是设计工具**：数据模型先于实现；跨边界数据（存储、网络、配置）先定义类型，再写逻辑。
+- **错误是类型的组成部分**：可预期的失败用结构化错误（判别联合），不可预期的缺陷直接抛出。
+- **注释解释「为什么」，不解释「是什么」**：代码本身说明做什么；注释只记录约束、动机和非显然行为。
+
+### 3.2 命名规范
+
+| 对象 | 风格 | 示例 |
+|---|---|---|
+| 文件/模块 | camelCase | `dsh-client.ts`、`sdk-profile.ts` |
+| 类型/接口/类 | PascalCase | `SendResult`、`DshError` |
+| 常量 | camelCase | `const SDK_PROFILE = 'octo-sdk'` |
+| 函数/方法 | camelCase 动词开头 | `createHarness()`、`sendPrompt()` |
+| 服务接口 | 固定名 `Interface` | `export interface Interface { ... }` |
+| 服务实现 | 固定名 `Service` | `export class Service implements Interface { ... }` |
+| 错误类 | `XxxError` 后缀 + `tag` 字段 | `DshError`、`CliError` |
+| 标称类型 | `XxxID` 或类型值同名 | `type ID = string & { readonly __brand: "..." }` |
+
+### 3.3 函数式优先（纯 TS）
+
+- ALWAYS `const`；需要重赋值时用三元或提前 return，**不用 `let`**（eslint 强制）。
+- ALWAYS 提前 return，**避免 `else`**（eslint 强制）。
+- ALWAYS 用 `map` / `filter` / `flatMap` / `find` / `some` / `every`，不手写 for 循环收集。
+- NEVER 为单次使用的逻辑抽 helper；helper 被复用或有清晰命名时才抽取，放在**主函数下方**（主函数保持 happy path）。
+- NEVER 无上下文解构（`const { a, b } = obj` 丢失来源）；保留 `obj.a` / `obj.b`。
+- 纯函数与 IO 分离：有副作用的函数与纯同步 helper 分开。
+
+### 3.4 错误处理（结构化错误）
+
+- ALWAYS 业务错误用带 `tag` 字段的 Error 子类定义（`src/agent/errors.ts` 为模板）：
+  ```ts
+  export class DshError extends Error {
+    readonly tag = 'DshError' as const
+    constructor(message: string, cause?: unknown) { super(message); this.name = 'DshError'; if (cause !== undefined) this.cause = cause }
+    static isInstance(error: unknown): error is DshError { /* 按 tag 判断 */ }
+  }
+  ```
+- ALWAYS 同一模块的错误收敛为类型联合（`export type Error = DshError | CliError`）。
+- ALWAYS 期望内处理：先判定是否业务错误（`isInstance`），按 `tag` 分支；未知错误冒泡。
+- NEVER 用裸 `try/catch` 包裹可预期逻辑；异步边界包装底层异常为业务错误（带 `cause`）。
+
+### 3.5 导入规范
+
+- ALWAYS 静态导入在顶部；重型模块只在需要处动态 `await import(...)`，且放最窄作用域。
+- NEVER 别名导入（`import { foo as bar }`，eslint 强制）；NEVER 星号导入（`import * as X`）。
+- ALWAYS 类型导入用 `import type` 或 inline `type` 修饰符。
+
+### 3.6 注释规范
+
+- ALWAYS 为**非显然的约束和意外行为**写注释；不为显而易见的赋值/控制流写注释。
+- JSDoc（`/** */`）用于模块级常量、类型、公共方法——一句话说明意图；有副作用/抛错标注 `@throws`。
+- `//` 注释解释「为什么」：动机、取舍、历史原因、上游 bug 规避。
+- TODO 注释说明未来方向和判断标准，不写空泛 TODO。
+
+### 3.7 反模式清单（NEVER）
+
+- NEVER `import * as Foo` 或 `import { foo as bar }`。
+- NEVER 用 `any`（含隐式）；用 `unknown` + 收窄，或标称类型。
+- NEVER 裸 `try/catch` 处理可预期业务错误——抛结构化错误，按 `tag` 分支。
+- NEVER 为单次使用抽 helper；NEVER 让主函数像面条而细节藏在别处。
+- NEVER 用 `let` 配合重赋值写可被三元/提前 return 替代的逻辑。
+- NEVER 用 `else`；NEVER 无谓解构。
+- NEVER 用默认导出；全部命名导出。
+- NEVER 留下死代码、空函数、占位 TODO；旧结构被替代后彻底删除（含回退分支、兼容标记）。
+- NEVER 用裸 `string` / `number` 表示有领域的值——标称类型或枚举。
+- NEVER 提交 secrets / keys。
+
+### 3.8 技术栈与语言
 
 - **TypeScript + Node.js >= 22.19**，ESM（`"type": "module"`），类型注解完整。
-- 格式化/lint：ESLint（项目配置），导入排序按项目配置。
-- 命名：变量/函数 camelCase，类/类型 PascalCase。
-- 每个模块文件头部有注释说明职责。
-- **注释要求**：复杂逻辑必须写注释，注释写「为什么」而非「是什么」（签名/类型表达「是什么」）。
+- 格式化/lint：ESLint（规则见 `eslint.config.js`）。
 - **语言规范**：代码注释、提交信息、文档统一使用**中文**；type/scope 保持英文；代码标识符保持英文。
 - **禁用 emoji**：代码、注释、文档、提交信息、终端输出一律不使用 emoji；状态用文字或 ASCII 标记（[x] / [ ]）。
 

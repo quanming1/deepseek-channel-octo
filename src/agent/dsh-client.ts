@@ -11,6 +11,7 @@ import type { HarnessNotification } from '@deepseek-ai/dsh-sdk-client'
 import { SDK_PROFILE } from '../config/dsh-compat.js'
 import type { DeepSeekHarnessOptions } from '@deepseek-ai/dsh-sdk-client'
 import { dshLaunchSpec } from './sdk-profile.js'
+import { DshError } from './errors.js'
 
 /** 一次 send 的执行结果 */
 export interface SendResult {
@@ -114,13 +115,13 @@ export async function sendPrompt(
     },
   })
 
-  // 轮次失败：抛错让 CLI 以非零退出（防静默失败）
+  // 轮次失败：抛结构化错误让 CLI 以非零退出（防静默失败）
   if (turnError !== null) {
-    throw new Error(turnError)
+    throw new DshError(turnError)
   }
   // 无错误但也没有回答：同样是异常
   if (!result.finalResponse) {
-    throw new Error('dsh 未返回回答（空响应）')
+    throw new DshError('dsh 未返回回答（空响应）')
   }
 
   return {

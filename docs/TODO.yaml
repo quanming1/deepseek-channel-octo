@@ -61,6 +61,22 @@ stages:
           - src/http/server.ts（/chat 端点，JSON 请求响应）
         acceptance: "curl POST /chat 返回 dsh 回答"
 
+  # ---- 阶段 F：代码规范（TS-STYLE-GUIDE）----
+  - id: F
+    name: 代码规范落地
+    steps:
+      - id: F1
+        title: TS-STYLE-GUIDE 规范引入项目
+        status: done
+        date: 2026-08-14
+        prd: docs/prd/PRD-F1-ts-style-guide.md
+        prd_status: 已验收
+        modules:
+          - AGENTS.md §3 代码风格（命名/函数式/错误处理/导入/注释/反模式）
+          - eslint.config.js 规则强化
+          - src/ 现有代码按结构化错误等核心规范对齐
+        acceptance: "typecheck + lint + test 全绿；AGENTS.md 引用 TS-STYLE-GUIDE 核心规则；现有代码符合结构化错误规范"
+
   # ---- 阶段 C：Octo 通道集成（后续规划，暂不展开 PRD）----
   - id: C
     name: Octo 通道集成

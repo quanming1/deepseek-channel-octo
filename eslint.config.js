@@ -26,6 +26,19 @@ export default tseslint.config(
     rules: {
       // 代码注释写「为什么」；空 catch 必须说明吞掉了什么
       'no-empty': ['error', { allowEmptyCatch: true }],
+      // TS-STYLE-GUIDE：const 优先，禁止可被替代的重赋值 let（ESLint 核心规则）
+      'prefer-const': 'error',
+      // TS-STYLE-GUIDE：避免 else，提前 return
+      'no-else-return': 'error',
+      // TS-STYLE-GUIDE：禁止星号导入（import * as X）——别名导入靠 AGENTS.md 约束
+      '@typescript-eslint/no-namespace': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ImportNamespaceSpecifier',
+          message: '禁止星号导入（import * as X），使用具名导入',
+        },
+      ],
     },
   },
 )
