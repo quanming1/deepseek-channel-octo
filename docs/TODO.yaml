@@ -104,17 +104,23 @@ stages:
           - 注释与实现一致性修正
         acceptance: "typecheck + lint + test + build 全绿；grep 无死字段/as never/直连子模块残留；send 实机回归正常"
 
-  # ---- 阶段 C：Octo 通道集成（后续规划，暂不展开 PRD）----
+  # ---- 阶段 C：Octo 通道集成 ----
   - id: C
     name: Octo 通道集成
     steps:
       - id: C1
-        title: AgentAdapter 抽象 + SDK runtime 桥接
-        status: todo
+        title: AgentAdapter 抽象 + SDK runtime 桥接（含 server 侧 resume）
+        status: in_progress
+        date: 2026-08-14
+        prd: docs/prd/PRD-C1-agent-adapter.md
+        prd_status: approved
         modules:
           - src/adapters/（AgentAdapter / AgentRun / AgentEvent 契约）
-          - src/adapters/dsh/（sdk-runtime / sdk-adapter / sdk-translate）
-        acceptance: 待立项细化（对齐 docs/dsh-lark-bot-analysis.md）
+          - src/adapters/dsh/（SdkDshAdapter：harness 按 cwd 缓存、事件翻译）
+          - 自研 SDK server 插件（getOrCreateSession 双分支：磁盘存档 resume / 无存档 create，
+            突破官方 dsh-sdk-jsonrpc-server 只有 create 的限制，见 demo/demo-resume.mjs 验证）
+          - CLI send --session 选项（透传 sessionId，resume 验收用）
+        acceptance: "typecheck + lint + test + build 全绿；adapter/server 双分支单测通过；实机两次独立 CLI 进程同 sessionId 续跑成功（第二次答出第一次教的秘密词）"
       - id: C2
         title: Octo WebSocket 通道
         status: todo
@@ -125,7 +131,8 @@ stages:
         title: 会话路由与并发
         status: todo
         modules:
-          - src/session/、src/bot/（scope key、排队、中断、审批）
+          - src/session/（scope→sessionId 映射持久化，参照 dsh-lark-bot SessionStore）
+          - src/bot/（active-runs 锁、排队、中断、审批）
         acceptance: 待立项细化
       - id: C4
         title: 测试 CI 文档与发布
