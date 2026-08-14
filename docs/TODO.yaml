@@ -78,9 +78,10 @@ stages:
         acceptance: "typecheck + lint + test 全绿；AGENTS.md 引用 TS-STYLE-GUIDE 核心规则；现有代码符合结构化错误规范"
       - id: F2
         title: Self-Export 命名空间引入
-        status: in_progress
+        status: done
+        date: 2026-08-14
         prd: docs/prd/PRD-F2-self-export.md
-        prd_status: approved
+        prd_status: 已验收
         modules:
           - src/config/dsh-compat.ts、src/agent/*.ts 文件顶部 self-export
           - src/agent/index.ts + src/config/index.ts 目录聚合

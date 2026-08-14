@@ -5,6 +5,9 @@
  * 可跨进程传输。调用方用 isInstance 收窄按 tag 分支处理，未知错误冒泡。
  */
 
+// Self-Export 命名空间（TS-STYLE-GUIDE §3）：消费者用 Errors.DshError 访问
+export * as Errors from './errors.js'
+
 /** dsh 运行时错误：握手失败、轮次失败、依赖安装失败等 */
 export class DshError extends Error {
   readonly tag = 'DshError' as const

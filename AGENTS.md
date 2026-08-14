@@ -35,7 +35,15 @@
 - **错误是类型的组成部分**：可预期的失败用结构化错误（判别联合），不可预期的缺陷直接抛出。
 - **注释解释「为什么」，不解释「是什么」**：代码本身说明做什么；注释只记录约束、动机和非显然行为。
 
-### 3.2 命名规范
+### 3.2 模块组织：Self-Export 命名空间
+
+- ALWAYS 每个模块文件顶部导出自己的命名空间：`export * as ModuleName from "./self"`（如 `dsh-client.ts` 顶部 `export * as DshClient from "./dsh-client"`）。
+- ALWAYS 消费者通过 `ModuleName.Member` 访问，禁止 `import { foo as bar }` 别名导入。
+- NEVER 使用 `import * as Foo from "..."` 星号导入——模块自己导出命名空间（eslint 强制禁止星号导入）。
+- ALWAYS 目录内建 `index.ts` 聚合透传各模块命名空间（`export * as X from "./x"`），消费者从目录入口统一引用。
+- 命名空间名 = 文件路径语义名（`agent/dsh-client.ts` → `DshClient`）。
+
+### 3.3 命名规范
 
 | 对象 | 风格 | 示例 |
 |---|---|---|
