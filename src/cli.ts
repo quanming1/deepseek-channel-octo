@@ -39,6 +39,27 @@ export function buildProgram(): Command {
       }
     })
 
+  program
+    .command('octo')
+    .description('Octo 通道 daemon')
+    .command('run')
+    .description('启动 Octo 桥接 daemon（环境变量 OCTO_API_URL/OCTO_BOT_TOKEN/OCTO_BOT_UID）')
+    .action(async () => {
+      try {
+        const { RunOcto } = await import('./bridge/index.js')
+        const config = RunOcto.loadOctoConfig()
+        await RunOcto.runOctoDaemon(config)
+      } catch (error) {
+        // 与 send 相同的错误分支：已知错误打印后非零退出
+        if (Errors.isKnownError(error)) {
+          console.error(`[错误] ${error.message}`)
+          process.exitCode = 1
+          return
+        }
+        throw error
+      }
+    })
+
   return program
 }
 

@@ -6,6 +6,11 @@
 
 ### 新增
 
+- C2（已验收）：Octo WebSocket 通道最小 MVP——`src/bridge/octo/`（WuKongIM 二进制协议编解码 +
+  WS 连接管理（DH+AES 握手/60s 心跳/指数退避重连/粘包解析）+ REST 最小集 sendMessage/heartbeat +
+  入站消息解析）；`octo-channel.ts` bridge（群 @bot 消息 → AgentAdapter.run → 文本回复，
+  sessionId=`octo:<account>:<chatId>` 直接复用群号，多轮续跑）；`run-octo.ts` daemon（配置加载/
+  生命周期/优雅退出）+ CLI `octo run` 子命令。单测 55 条全绿；实机待 Octo 环境（清单见 PRD-C2）。
 - C1（已验收）：AgentAdapter 抽象 + SDK runtime 桥接——
   `src/adapters/types.ts` 渠道无关契约（AgentEvent 判别联合 / AgentRunOptions 含 sessionId 一等参数）；
   `SdkDshAdapter`（harness 按 cwd 常驻缓存 + notification→AgentEvent 翻译，可注入 harnessFactory）；
